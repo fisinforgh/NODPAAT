@@ -16,8 +16,8 @@ class OptimizedSkim {
 private:
   string prefix;
 
-  // Pre-calculated lookup tables for date conversions (much faster than
-  // calculations)
+  // Pre-calculated lookup tables for date conversions
+
   static constexpr array<int, 12> days_in_month_normal = {
       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
   static constexpr array<int, 12> days_in_month_leap = {31, 29, 31, 30, 31, 30,
@@ -41,7 +41,7 @@ private:
     return (year & 3) == 0 && (year % 100 != 0 || year % 400 == 0);
   }
 
-  // Optimized day-of-year calculation using lookup tables
+  // day-of-year calculation using lookup tables
   inline int dayOfYear(int day, int month, int year) const noexcept {
     if (month < 1 || month > 12 || day < 1)
       return -1;
@@ -57,7 +57,7 @@ private:
     return cumulative[month - 1] + day;
   }
 
-  // Optimized conversion from day-of-year to calendar date
+  // conversion from day-of-year to calendar date
   pair<int, int> dayOfYearToDate(int doy, int year) const noexcept {
     if (doy < 1)
       return {0, 0};

@@ -41,7 +41,7 @@ private:
     return fs::exists(path) && fs::is_directory(path);
   }
 
-  // Get list of HE5 files efficiently
+  // Get list of HE5 files
   vector<string> getHE5Files(int year) const {
     vector<string> files;
     string dirPath = pathToData + "aura_" + to_string(year);
@@ -66,7 +66,7 @@ private:
     return files;
   }
 
-  // Extract date from filename more efficiently
+  // Extract date from filename
   struct DateInfo {
     string day, month, year;
     bool valid = false;
@@ -91,7 +91,7 @@ private:
     return info;
   }
 
-  // Execute h5dump command and get result more efficiently
+  // Execute h5dump command
   float executeH5Dump(const string &filename, int binLat, int binLon) const {
     // Build h5dump command
     string command = "h5dump -d \"/HDFEOS/GRIDS/OMI Column Amount O3/Data "

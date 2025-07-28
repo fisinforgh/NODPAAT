@@ -34,7 +34,7 @@ private:
         continue;
       }
 
-      // Enhanced compilation with aggressive optimizations
+      // compilation
       std::string command = "g++ -O3 -march=native -mtune=native -flto "
                             "-funroll-loops -ffast-math -DNDEBUG "
                             "-Wno-write-strings " +
@@ -56,7 +56,7 @@ private:
     return;
   }
 
-  // Execute command with better error handling and performance
+  // Execute command with better error handling
   bool executeCommand(const std::string &command) {
     std::cout << "Running: " << command << std::endl;
     int result = std::system(command.c_str());
@@ -68,7 +68,7 @@ private:
     return true;
   }
 
-  // Optimized file moving with better error handling
+  // file moving
   bool moveDataFiles(const std::string &location) {
     try {
       fs::create_directories(location);
@@ -136,7 +136,7 @@ public:
     std::string argsStr = args.str();
     std::cout << "Parameters for cpp codes: " << argsStr << std::endl;
 
-    // Run aprobe.exe with better error handling
+    // Run aprobe.exe
     if (!executeCommand("./aprobe.exe" + argsStr)) {
       return false;
     }
