@@ -6,10 +6,22 @@ To compile:
   g++ -O3 -march=native -std=c++17 optimized_ozone_processor.cpp -o optimized_ozone_processor
 ```
 
-To execute:
+Usage examples:
+
+Parallel processing with 4 threads
 
 ```cpp
- ./optimized_ozone_processor pgrid ../../wget_ozono_NASA -90 90 10 7 4
+./optimized_ozone_processor pgrid /path/to/data/ -90 90 10 7 4
 ```
 
-Note: the number of cores its the last number
+Sequential processing (original behavior)
+
+```cpp
+./optimized_ozone_processor grid /path/to/data/ -90 90 10 6
+```
+
+Single location
+
+```cpp
+./optimized_ozone_processor location BOG /path/to/data/ 4.36 -74.04 6
+```
