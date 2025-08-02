@@ -1,9 +1,9 @@
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <future>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -26,8 +26,9 @@ private:
 
     std::vector<std::pair<std::string, std::string>> programs = {
         {"optimized_aprobe.cpp", "aprobe.exe"},
+        {"nmeprobeData.cpp", "nmprobe.exe"},
+        {"make_1995.cpp", "make_1995.exe"},
         {"optimized_skim.cpp", "skim.exe"}};
-
     for (const auto &[source, executable] : programs) {
       // Skip if already compiled and executable exists
       if (compiled_programs.count(executable) && fs::exists(executable)) {
@@ -141,6 +142,23 @@ public:
       return false;
     }
 
+    // Run nmprobe.exe with different -S parameters (S1, S2, S3)
+    for (int s = 1; s <= 3; s++) {
+      std::ostringstream nmprobeArgs;
+      nmprobeArgs << " -A" << std::fixed << std::setprecision(6) << lat << " -B"
+                  << std::fixed << std::setprecision(6) << lon << " -P"
+                  << location << " -S" << s << " -D" << pathO3Files;
+
+      if (!executeCommand("./nmprobe.exe" + nmprobeArgs.str())) {
+        return false;
+      }
+    }
+
+    // Run make_1995.exe
+    if (!executeCommand("./make_1995.exe -P" + location)) {
+      return false;
+    }
+
     // Move files to directory
     if (!moveDataFiles(location)) {
       return false;
@@ -148,8 +166,7 @@ public:
 
     // Run skim.exe
     if (!executeCommand("./skim.exe -P" + location)) {
-      std::cerr << "Warning: skim.exe failed, continuing..." << std::endl;
-      // Don't return false here as this might not be critical
+      return false;
     }
 
     return true;
@@ -267,7 +284,8 @@ public:
 
   ~OptimizedOzoneDataProcessor() {
     // Final cleanup only when processor is destroyed
-    std::vector<std::string> executables = {"aprobe.exe", "skim.exe"};
+    std::vector<std::string> executables = {"aprobe.exe", "skim.exe",
+                                            "nmprobe.exe", "make_1995.exe"};
     for (const auto &exe : executables) {
       if (fs::exists(exe)) {
         fs::remove(exe);
@@ -390,5 +408,26 @@ int main(int argc, char *argv[]) {
       printUsage(argv[0]);
       return 1;
     }
+
+    std::string location = argv[2];
+    std::string pathO3Files = argv[3];
+    double lat = std::stod(argv[4]);
+    double lon = std::stod(argv[5]);
+    int evCut = std::stoi(argv[6]);
+
+    OptimizedOzoneDataProcessor processor(pathO3Files, evCut);
+
+    if (!processor.processLocation(location, lat, lon)) {
+      std::cerr << "Location processing failed" << std::endl;
+      return 1;
+    }
+
+    std::cout << "Location processing completed successfully" << std::endl;
+  } else {
+    std::cout << "Unknown mode: " << mode << std::endl;
+    printUsage(argv[0]);
+    return 1;
   }
+
+  return 0;
 }

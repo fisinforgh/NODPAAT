@@ -19,11 +19,11 @@ private:
   string prefix;
   string pathToData;
 
-  // Optimized coordinate conversion using compile-time constants
+  // coordinate conversion using compile-time constants
   static constexpr float STEP_A = 0.25f;
   static constexpr float XMIN_LAT_A = -89.875f;
   static constexpr float XMIN_LON_A = -179.875f;
-  static constexpr int YMIN = 2024;
+  static constexpr int YMIN = 2005;
   static constexpr int YMAX = 2024;
 
   inline int calculateLatBin(float latitude) const noexcept {
