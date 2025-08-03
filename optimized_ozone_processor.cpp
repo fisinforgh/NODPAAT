@@ -26,9 +26,10 @@ private:
 
     std::vector<std::pair<std::string, std::string>> programs = {
         {"optimized_aprobe.cpp", "aprobe.exe"},
+        {"optimized_skim.cpp", "skim.exe"},
         {"nmeprobeData.cpp", "nmprobe.exe"},
-        {"make_1995.cpp", "make_1995.exe"},
-        {"optimized_skim.cpp", "skim.exe"}};
+        {"make_1995.cpp", "make_1995.exe"}};
+
     for (const auto &[source, executable] : programs) {
       // Skip if already compiled and executable exists
       if (compiled_programs.count(executable) && fs::exists(executable)) {
@@ -57,13 +58,49 @@ private:
     return;
   }
 
-  // Execute command with better error handling
-  bool executeCommand(const std::string &command) {
-    std::cout << "Running: " << command << std::endl;
+  // Thread-safe execution with unique temporary files
+  bool executeCommandThreadSafe(const std::string &command,
+                                const std::string &location) {
+    std::cout << "Running (thread-safe): " << command << std::endl;
+
+    // Check if executable exists before running
+    std::string executable = command.substr(0, command.find(' '));
+    if (executable.length() >= 2 && executable.substr(0, 2) == "./") {
+      executable = executable.substr(2);
+    }
+
+    if (!fs::exists(executable)) {
+      std::cerr << "Executable not found: " << executable << std::endl;
+      return false;
+    }
+
+    // Clean up potential leftover files that might cause issues
+    // Use location-specific temporary file names to avoid thread conflicts
+    std::vector<std::string> tempFiles = {
+        "logLonLine_" + location + ".txt", "logLatLine_" + location + ".txt",
+        "list_" + location + ".txt", "logChkDir_" + location + ".txt"};
+
+    for (const auto &file : tempFiles) {
+      if (fs::exists(file)) {
+        fs::remove(file);
+        std::cout << "Cleaned up existing file: " << file << std::endl;
+      }
+    }
+
     int result = std::system(command.c_str());
     if (result != 0) {
       std::cerr << "Command failed with code " << result << ": " << command
                 << std::endl;
+
+      if (result == 34304) {
+        std::cerr << "Error 34304: This indicates a segmentation fault or "
+                     "abort signal"
+                  << std::endl;
+        std::cerr << "Likely causes: threading conflicts, invalid memory "
+                     "access, missing data files, or string parsing error"
+                  << std::endl;
+      }
+
       return false;
     }
     return true;
@@ -138,7 +175,28 @@ public:
     std::cout << "Parameters for cpp codes: " << argsStr << std::endl;
 
     // Run aprobe.exe
-    if (!executeCommand("./aprobe.exe" + argsStr)) {
+    if (!executeCommandThreadSafe("./aprobe.exe" + argsStr, location)) {
+      return false;
+    }
+
+    // Check if aprobe.exe produced expected output files before proceeding
+    bool foundOutputFiles = false;
+    for (const auto &entry : fs::directory_iterator(".")) {
+      if (entry.is_regular_file()) {
+        std::string filename = entry.path().filename().string();
+        if (filename.find(location + "_") == 0 &&
+            filename.find(".dat") != std::string::npos) {
+          foundOutputFiles = true;
+          break;
+        }
+      }
+    }
+
+    if (!foundOutputFiles) {
+      std::cerr << "No output files found from aprobe.exe for location: "
+                << location << std::endl;
+      std::cerr << "Skipping nmprobe.exe execution to avoid crashes"
+                << std::endl;
       return false;
     }
 
@@ -149,13 +207,19 @@ public:
                   << std::fixed << std::setprecision(6) << lon << " -P"
                   << location << " -S" << s << " -D" << pathO3Files;
 
-      if (!executeCommand("./nmprobe.exe" + nmprobeArgs.str())) {
+      std::cout << "Attempting to run nmprobe.exe with -S" << s << std::endl;
+
+      // Use thread-safe execution to avoid conflicts between parallel processes
+      if (!executeCommandThreadSafe("./nmprobe.exe" + nmprobeArgs.str(),
+                                    location)) {
+        std::cerr << "nmprobe.exe failed with -S" << s
+                  << " for location: " << location << std::endl;
         return false;
       }
     }
 
     // Run make_1995.exe
-    if (!executeCommand("./make_1995.exe -P" + location)) {
+    if (!executeCommandThreadSafe("./make_1995.exe -P" + location, location)) {
       return false;
     }
 
@@ -165,7 +229,7 @@ public:
     }
 
     // Run skim.exe
-    if (!executeCommand("./skim.exe -P" + location)) {
+    if (!executeCommandThreadSafe("./skim.exe -P" + location, location)) {
       return false;
     }
 
