@@ -1,4 +1,3 @@
-// optimized_skim.cpp
 #include <algorithm>
 #include <array>
 #include <chrono>
