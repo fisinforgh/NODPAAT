@@ -20,7 +20,7 @@ private:
   static std::mutex compilation_mutex;
   static std::unordered_set<std::string> compiled_programs;
 
-  // Single compilation with better optimization flags
+  // Single compilation
   bool compilePrograms() {
     std::lock_guard<std::mutex> lock(compilation_mutex);
 
@@ -53,10 +53,7 @@ private:
     return true;
   }
 
-  void cleanupExecutables() {
-    // Only cleanup at the very end to avoid recompilation
-    return;
-  }
+  void cleanupExecutables() { return; }
 
   // Thread-safe execution with unique temporary files
   bool executeCommandThreadSafe(const std::string &command,
@@ -75,7 +72,7 @@ private:
     }
 
     // Clean up potential leftover files that might cause issues
-    // Use location-specific temporary file names to avoid thread conflicts
+    // Location-specific temporary file names to avoid thread conflicts
     std::vector<std::string> tempFiles = {
         "logLonLine_" + location + ".txt", "logLatLine_" + location + ".txt",
         "list_" + location + ".txt", "logChkDir_" + location + ".txt"};
@@ -236,7 +233,7 @@ public:
     return true;
   }
 
-  // Parallel grid processing for maximum performance
+  // Parallel grid processing
   bool processGridParallel(int latMin, int latMax, int lonMin, int lonMax,
                            int gridPrecision, int numThreads = 0) {
 
@@ -316,7 +313,7 @@ public:
     return allSuccess;
   }
 
-  // Sequential processing (original behavior)
+  // Sequential processing
   bool processGrid(int latMin, int latMax, int lonMin, int lonMax,
                    int gridPrecision) {
     std::cout << "Processing grid sequentially: Lat[" << latMin << "," << latMax
