@@ -65,7 +65,7 @@ private:
     const auto &cumulative =
         isLeapYear(year) ? cumulative_days_leap : cumulative_days_normal;
 
-    // Binary search for month (faster than linear search)
+    // Binary search for month
     int month = lower_bound(cumulative.begin() + 1, cumulative.end(), doy) -
                 cumulative.begin();
     int day = doy - cumulative[month - 1];
@@ -73,7 +73,7 @@ private:
     return {day, month};
   }
 
-  // Get all .dat files in directory efficiently using filesystem
+  // Get all .dat files in directory using filesystem
   vector<string> getDataFiles() const {
     vector<string> files;
     string dirPath = prefix + "/";
@@ -93,7 +93,7 @@ private:
     return files;
   }
 
-  // Fast file reading with better I/O buffer
+  // Fast file reading
   vector<DateData> readFileData(const string &filename) const {
     vector<DateData> data;
     ifstream file(filename);
@@ -103,10 +103,9 @@ private:
       return data;
     }
 
-    // Use larger buffer for better I/O performance
     file.rdbuf()->pubsetbuf(nullptr, 8192);
 
-    data.reserve(400); // Reserve space based on original code
+    data.reserve(400); // Reserve space
 
     int day, month, year;
     float value;
