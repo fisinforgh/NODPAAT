@@ -53,8 +53,6 @@ private:
     return true;
   }
 
-  void cleanupExecutables() { return; }
-
   // Thread-safe execution with unique temporary files
   bool executeCommandThreadSafe(const std::string &command,
                                 const std::string &location) {
