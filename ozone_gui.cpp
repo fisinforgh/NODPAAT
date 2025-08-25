@@ -21,7 +21,7 @@ private:
   TGTextEntry *fLocationEntry;
   TGDoubleHSlider *fLatSlider;
   TGLabel *fLatMinLabel, *fLatMaxLabel;
-  TGNumberEntry *fParam1Entry, *fParam2Entry, *fParam3Entry;
+  TGNumberEntry *fParamGrid, *fParamEvents, *fParamThreads;
   TGTextView *fLogView;
   TString fExePath; // full path to executable
 
@@ -131,39 +131,39 @@ public:
     paramMatrix->AddFrame(
         new TGLabel(paramMatrix, "Grid:"),
         new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
-    fParam1Entry =
+    fParamGrid =
         new TGNumberEntry(paramMatrix, 10, 6, -1, TGNumberFormat::kNESInteger,
                           TGNumberFormat::kNEANonNegative,
                           TGNumberFormat::kNELLimitMinMax, 0, 100);
-    fParam1Entry->Resize(80, 28);
+    fParamGrid->Resize(80, 28);
     paramMatrix->AddFrame(
-        fParam1Entry,
+        fParamGrid,
         new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
     // Events row
     paramMatrix->AddFrame(
         new TGLabel(paramMatrix, "Events:"),
         new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
-    fParam2Entry =
+    fParamEvents =
         new TGNumberEntry(paramMatrix, 7, 6, -1, TGNumberFormat::kNESInteger,
                           TGNumberFormat::kNEANonNegative,
                           TGNumberFormat::kNELLimitMinMax, 0, 100);
-    fParam2Entry->Resize(80, 28);
+    fParamEvents->Resize(80, 28);
     paramMatrix->AddFrame(
-        fParam2Entry,
+        fParamEvents,
         new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
     // Threads row
     paramMatrix->AddFrame(
         new TGLabel(paramMatrix, "Threads:"),
         new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
-    fParam3Entry =
+    fParamThreads =
         new TGNumberEntry(paramMatrix, 4, 6, -1, TGNumberFormat::kNESInteger,
                           TGNumberFormat::kNEANonNegative,
                           TGNumberFormat::kNELLimitMinMax, 0, 100);
-    fParam3Entry->Resize(80, 28);
+    fParamThreads->Resize(80, 28);
     paramMatrix->AddFrame(
-        fParam3Entry,
+        fParamThreads,
         new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
     paramFrame->AddFrame(paramMatrix, new TGLayoutHints(kLHintsExpandX));
@@ -207,7 +207,7 @@ public:
     // Final setup
     SetWindowName("Optimized Ozone Processor GUI");
     MapSubwindows();
-    Resize(500, 600); // compact size
+    Resize(500, 700); // compact size
     MapWindow();
 
     UpdateLatLabels();
@@ -292,26 +292,26 @@ public:
         std::string(fExePath.Data()) + " " + std::string(mode.Data()) + " " +
         std::string(fDataPathEntry->GetText()) + " " +
         std::to_string((int)latMin) + " " + std::to_string((int)latMax) + " " +
-        std::to_string((int)fParam1Entry->GetNumber()) + " " +
-        std::to_string((int)fParam2Entry->GetNumber()) + " " +
-        std::to_string((int)fParam3Entry->GetNumber());
+        std::to_string((int)fParamGrid->GetNumber()) + " " +
+        std::to_string((int)fParamEvents->GetNumber()) + " " +
+        std::to_string((int)fParamThreads->GetNumber());
     if (mode == "location") {
       TString locCode = fLocationEntry->GetText();
       // Example: ./optimized_ozone_processor location BOG /path 4.36 -74.04 6
       cmd = std::string(fExePath.Data()) + " location " +
             std::string(locCode.Data()) + " " +
             std::string(fDataPathEntry->GetText()) + " " +
-            std::to_string(4.36) + " " +                    // latitude
-            std::to_string(-74.04) + " " +                  // longitude
-            std::to_string((int)fParam1Entry->GetNumber()); // last param
+            std::to_string(4.36) + " " +                  // latitude
+            std::to_string(-74.04) + " " +                // longitude
+            std::to_string((int)fParamGrid->GetNumber()); // last param
     } else {
       // Default mode (pgrid, location)
       cmd = std::string(fExePath.Data()) + " " + std::string(mode.Data()) +
             " " + std::string(fDataPathEntry->GetText()) + " " +
             std::to_string((int)latMin) + " " + std::to_string((int)latMax) +
-            " " + std::to_string((int)fParam1Entry->GetNumber()) + " " +
-            std::to_string((int)fParam2Entry->GetNumber()) + " " +
-            std::to_string((int)fParam3Entry->GetNumber());
+            " " + std::to_string((int)fParamGrid->GetNumber()) + " " +
+            std::to_string((int)fParamEvents->GetNumber()) + " " +
+            std::to_string((int)fParamThreads->GetNumber());
     }
     AppendLog(Form("Running: %s", cmd.c_str()));
 
