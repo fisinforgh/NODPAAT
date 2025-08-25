@@ -122,36 +122,51 @@ public:
     // -------- Parameters Section --------
     TGGroupFrame *paramFrame = new TGGroupFrame(this, "Parameters");
 
-    TGHorizontalFrame *p1 = new TGHorizontalFrame(paramFrame);
-    p1->AddFrame(new TGLabel(p1, "Grid :"),
-                 new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    fParam1Entry = new TGNumberEntry(p1, 10, 6, -1, TGNumberFormat::kNESInteger,
-                                     TGNumberFormat::kNEANonNegative,
-                                     TGNumberFormat::kNELLimitMinMax, 0, 100);
+    // Use a matrix layout: 3 rows x 2 columns
+    TGCompositeFrame *paramMatrix =
+        new TGCompositeFrame(paramFrame, 1, 1, kHorizontalFrame);
+    paramMatrix->SetLayoutManager(new TGMatrixLayout(paramMatrix, 0, 2, 10, 5));
+
+    // Grid row
+    paramMatrix->AddFrame(
+        new TGLabel(paramMatrix, "Grid:"),
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
+    fParam1Entry =
+        new TGNumberEntry(paramMatrix, 10, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 100);
     fParam1Entry->Resize(80, 28);
-    p1->AddFrame(fParam1Entry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY));
-    paramFrame->AddFrame(p1, new TGLayoutHints(kLHintsExpandX));
+    paramMatrix->AddFrame(
+        fParam1Entry,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
-    TGHorizontalFrame *p2 = new TGHorizontalFrame(paramFrame);
-    p2->AddFrame(new TGLabel(p2, "Events :"),
-                 new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    fParam2Entry = new TGNumberEntry(p2, 7, 6, -1, TGNumberFormat::kNESInteger,
-                                     TGNumberFormat::kNEANonNegative,
-                                     TGNumberFormat::kNELLimitMinMax, 0, 100);
+    // Events row
+    paramMatrix->AddFrame(
+        new TGLabel(paramMatrix, "Events:"),
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
+    fParam2Entry =
+        new TGNumberEntry(paramMatrix, 7, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 100);
     fParam2Entry->Resize(80, 28);
-    p2->AddFrame(fParam2Entry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY));
-    paramFrame->AddFrame(p2, new TGLayoutHints(kLHintsExpandX));
+    paramMatrix->AddFrame(
+        fParam2Entry,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
-    TGHorizontalFrame *p3 = new TGHorizontalFrame(paramFrame);
-    p3->AddFrame(new TGLabel(p3, "Threads :"),
-                 new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    fParam3Entry = new TGNumberEntry(p3, 4, 6, -1, TGNumberFormat::kNESInteger,
-                                     TGNumberFormat::kNEANonNegative,
-                                     TGNumberFormat::kNELLimitMinMax, 0, 100);
+    // Threads row
+    paramMatrix->AddFrame(
+        new TGLabel(paramMatrix, "Threads:"),
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY, 5, 5, 2, 2));
+    fParam3Entry =
+        new TGNumberEntry(paramMatrix, 4, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 100);
     fParam3Entry->Resize(80, 28);
-    p3->AddFrame(fParam3Entry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY));
-    paramFrame->AddFrame(p3, new TGLayoutHints(kLHintsExpandX));
+    paramMatrix->AddFrame(
+        fParam3Entry,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
+    paramFrame->AddFrame(paramMatrix, new TGLayoutHints(kLHintsExpandX));
     AddFrame(paramFrame, new TGLayoutHints(kLHintsExpandX, 10, 10, 5, 5));
 
     // -------- Run and Cancel Buttons --------
