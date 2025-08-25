@@ -123,7 +123,7 @@ public:
     TGGroupFrame *paramFrame = new TGGroupFrame(this, "Parameters");
 
     TGHorizontalFrame *p1 = new TGHorizontalFrame(paramFrame);
-    p1->AddFrame(new TGLabel(p1, "Param 1:"),
+    p1->AddFrame(new TGLabel(p1, "Grid :"),
                  new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
     fParam1Entry = new TGNumberEntry(p1, 10, 6, -1, TGNumberFormat::kNESInteger,
                                      TGNumberFormat::kNEANonNegative,
@@ -133,7 +133,7 @@ public:
     paramFrame->AddFrame(p1, new TGLayoutHints(kLHintsExpandX));
 
     TGHorizontalFrame *p2 = new TGHorizontalFrame(paramFrame);
-    p2->AddFrame(new TGLabel(p2, "Param 2:"),
+    p2->AddFrame(new TGLabel(p2, "Events :"),
                  new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
     fParam2Entry = new TGNumberEntry(p2, 7, 6, -1, TGNumberFormat::kNESInteger,
                                      TGNumberFormat::kNEANonNegative,
@@ -143,7 +143,7 @@ public:
     paramFrame->AddFrame(p2, new TGLayoutHints(kLHintsExpandX));
 
     TGHorizontalFrame *p3 = new TGHorizontalFrame(paramFrame);
-    p3->AddFrame(new TGLabel(p3, "Param 3:"),
+    p3->AddFrame(new TGLabel(p3, "Threads :"),
                  new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
     fParam3Entry = new TGNumberEntry(p3, 4, 6, -1, TGNumberFormat::kNESInteger,
                                      TGNumberFormat::kNEANonNegative,
