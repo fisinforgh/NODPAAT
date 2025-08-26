@@ -11,8 +11,10 @@
 #include <TTimer.h>
 #include <iostream>
 #include <signal.h>
+#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 
 class OzoneGUI : public TGMainFrame {
 private:
@@ -23,6 +25,7 @@ private:
   TGLabel *fLatMinLabel, *fLatMaxLabel;
   TGNumberEntry *fParamGrid, *fParamEvents, *fParamThreads;
   TGTextView *fLogView;
+  TGTextButton *fSilentModeButton;
   TString fExePath; // full path to executable
 
   // Process control
@@ -31,11 +34,16 @@ private:
   int fPipeFd[2];       // pipe for reading process output
   TTimer *fOutputTimer; // timer to check for output
   Bool_t fProcessRunning;
+  Bool_t fSilentMode;
+
+  // Output buffering
+  std::vector<std::string> fOutputBuffer;
+  static const int kMaxBufferSize = 50;
 
 public:
   OzoneGUI(const TGWindow *p, UInt_t w, UInt_t h)
       : TGMainFrame(p, w, h), fProcessPid(-1), fOutputTimer(nullptr),
-        fProcessRunning(kFALSE) {
+        fProcessRunning(kFALSE), fSilentMode(kFALSE) {
 
     // Initialize pipe
     fPipeFd[0] = fPipeFd[1] = -1;
@@ -77,6 +85,7 @@ public:
     locFrame->AddFrame(locHFrame,
                        new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
     AddFrame(locFrame, new TGLayoutHints(kLHintsExpandX, 10, 10, 5, 5));
+
     // -------- Data Path Section --------
     TGGroupFrame *pathFrame = new TGGroupFrame(this, "Data Path");
     TGHorizontalFrame *pathHFrame = new TGHorizontalFrame(pathFrame);
@@ -169,6 +178,17 @@ public:
     paramFrame->AddFrame(paramMatrix, new TGLayoutHints(kLHintsExpandX));
     AddFrame(paramFrame, new TGLayoutHints(kLHintsExpandX, 10, 10, 5, 5));
 
+    // -------- Performance Options --------
+    TGGroupFrame *perfFrame = new TGGroupFrame(this, "Performance Options");
+    fSilentModeButton =
+        new TGTextButton(perfFrame, "Silent Mode: OFF (Click to toggle)");
+    fSilentModeButton->Connect("Clicked()", "OzoneGUI", this,
+                               "ToggleSilentMode()");
+    fSilentModeButton->Resize(300, 28);
+    perfFrame->AddFrame(fSilentModeButton,
+                        new TGLayoutHints(kLHintsLeft, 10, 10, 5, 5));
+    AddFrame(perfFrame, new TGLayoutHints(kLHintsExpandX, 10, 10, 5, 5));
+
     // -------- Run and Cancel Buttons --------
     TGHorizontalFrame *btnFrame = new TGHorizontalFrame(this);
 
@@ -207,7 +227,7 @@ public:
     // Final setup
     SetWindowName("Optimized Ozone Processor GUI");
     MapSubwindows();
-    Resize(500, 700); // compact size
+    Resize(500, 750); // slightly taller for new options
     MapWindow();
 
     UpdateLatLabels();
@@ -230,8 +250,34 @@ public:
   }
 
   void AppendLog(const char *msg) {
+    if (fSilentMode && fProcessRunning) {
+      return; // Don't update log in silent mode during execution
+    }
     fLogView->AddLine(msg);
     fLogView->ShowBottom();
+  }
+
+  void FlushOutputBuffer() {
+    if (fOutputBuffer.empty())
+      return;
+
+    for (const auto &line : fOutputBuffer) {
+      fLogView->AddLine(line.c_str());
+    }
+    fLogView->ShowBottom();
+    fOutputBuffer.clear();
+  }
+
+  void ToggleSilentMode() {
+    fSilentMode = !fSilentMode;
+    if (fSilentMode) {
+      fSilentModeButton->SetText("Silent Mode: ON (Click to toggle)");
+      AppendLog("Silent mode enabled - output will be shown only when process "
+                "completes.");
+    } else {
+      fSilentModeButton->SetText("Silent Mode: OFF (Click to toggle)");
+      AppendLog("Silent mode disabled - real-time output enabled.");
+    }
   }
 
   void BrowseForFolder() {
@@ -272,10 +318,15 @@ public:
       return;
     }
 
-    // Create pipe for reading output
-    if (pipe(fPipeFd) == -1) {
-      AppendLog("Error: failed to create pipe.");
-      return;
+    // Clear output buffer
+    fOutputBuffer.clear();
+
+    // Only create pipe if not in silent mode
+    if (!fSilentMode) {
+      if (pipe(fPipeFd) == -1) {
+        AppendLog("Error: failed to create pipe.");
+        return;
+      }
     }
 
     // Save current working directory
@@ -288,16 +339,9 @@ public:
     double latMin = fLatSlider->GetMinPosition();
     double latMax = fLatSlider->GetMaxPosition();
 
-    std::string cmd =
-        std::string(fExePath.Data()) + " " + std::string(mode.Data()) + " " +
-        std::string(fDataPathEntry->GetText()) + " " +
-        std::to_string((int)latMin) + " " + std::to_string((int)latMax) + " " +
-        std::to_string((int)fParamGrid->GetNumber()) + " " +
-        std::to_string((int)fParamEvents->GetNumber()) + " " +
-        std::to_string((int)fParamThreads->GetNumber());
+    std::string cmd;
     if (mode == "location") {
       TString locCode = fLocationEntry->GetText();
-      // Example: ./optimized_ozone_processor location BOG /path 4.36 -74.04 6
       cmd = std::string(fExePath.Data()) + " location " +
             std::string(locCode.Data()) + " " +
             std::string(fDataPathEntry->GetText()) + " " +
@@ -305,7 +349,6 @@ public:
             std::to_string(-74.04) + " " +                // longitude
             std::to_string((int)fParamGrid->GetNumber()); // last param
     } else {
-      // Default mode (pgrid, location)
       cmd = std::string(fExePath.Data()) + " " + std::string(mode.Data()) +
             " " + std::string(fDataPathEntry->GetText()) + " " +
             std::to_string((int)latMin) + " " + std::to_string((int)latMax) +
@@ -313,7 +356,11 @@ public:
             std::to_string((int)fParamEvents->GetNumber()) + " " +
             std::to_string((int)fParamThreads->GetNumber());
     }
+
     AppendLog(Form("Running: %s", cmd.c_str()));
+    if (fSilentMode) {
+      AppendLog("Running in silent mode - please wait for completion...");
+    }
 
     // Fork process
     fProcessPid = fork();
@@ -326,10 +373,12 @@ public:
 
     if (fProcessPid == 0) {
       // Child process
-      close(fPipeFd[0]);               // close read end
-      dup2(fPipeFd[1], STDOUT_FILENO); // redirect stdout to pipe
-      dup2(fPipeFd[1], STDERR_FILENO); // redirect stderr to pipe
-      close(fPipeFd[1]);
+      if (!fSilentMode) {
+        close(fPipeFd[0]);               // close read end
+        dup2(fPipeFd[1], STDOUT_FILENO); // redirect stdout to pipe
+        dup2(fPipeFd[1], STDERR_FILENO); // redirect stderr to pipe
+        close(fPipeFd[1]);
+      }
 
       // Change to executable directory
       chdir(exeDir.Data());
@@ -340,44 +389,62 @@ public:
     }
 
     // Parent process
-    close(fPipeFd[1]); // close write end
-    fPipeFd[1] = -1;
+    if (!fSilentMode) {
+      close(fPipeFd[1]); // close write end
+      fPipeFd[1] = -1;
 
-    // Make read end non-blocking
-    int flags = fcntl(fPipeFd[0], F_GETFL, 0);
-    fcntl(fPipeFd[0], F_SETFL, flags | O_NONBLOCK);
+      // Make read end non-blocking
+      int flags = fcntl(fPipeFd[0], F_GETFL, 0);
+      fcntl(fPipeFd[0], F_SETFL, flags | O_NONBLOCK);
+
+      // Start timer to check for output - reduced frequency
+      if (!fOutputTimer) {
+        fOutputTimer = new TTimer();
+        fOutputTimer->Connect("Timeout()", "OzoneGUI", this,
+                              "CheckProcessOutput()");
+      }
+      fOutputTimer->Start(500); // check every 500ms instead of 100ms
+    } else {
+      // In silent mode, just start a timer to check process completion
+      if (!fOutputTimer) {
+        fOutputTimer = new TTimer();
+        fOutputTimer->Connect("Timeout()", "OzoneGUI", this,
+                              "CheckProcessOutput()");
+      }
+      fOutputTimer->Start(1000); // check every 1 second for completion
+    }
 
     fProcessRunning = kTRUE;
     fRunButton->SetEnabled(kFALSE);
     fCancelButton->SetEnabled(kTRUE);
-
-    // Start timer to check for output
-    if (!fOutputTimer) {
-      fOutputTimer = new TTimer();
-      fOutputTimer->Connect("Timeout()", "OzoneGUI", this,
-                            "CheckProcessOutput()");
-    }
-    fOutputTimer->Start(100); // check every 100ms
   }
 
   void CheckProcessOutput() {
     if (!fProcessRunning)
       return;
 
-    char buffer[1024];
-    ssize_t bytesRead;
+    // Read output only if not in silent mode
+    if (!fSilentMode && fPipeFd[0] != -1) {
+      char buffer[4096]; // Larger buffer
+      ssize_t bytesRead;
 
-    // Read available output
-    while ((bytesRead = read(fPipeFd[0], buffer, sizeof(buffer) - 1)) > 0) {
-      buffer[bytesRead] = '\0';
+      // Read available output and buffer it
+      while ((bytesRead = read(fPipeFd[0], buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytesRead] = '\0';
 
-      // Split by lines and add each line separately
-      char *line = strtok(buffer, "\n");
-      while (line != nullptr) {
-        AppendLog(line);
-        line = strtok(nullptr, "\n");
+        // Split by lines and add to buffer
+        char *line = strtok(buffer, "\n");
+        while (line != nullptr) {
+          fOutputBuffer.push_back(std::string(line));
+          line = strtok(nullptr, "\n");
+        }
+
+        // Flush buffer if it gets too large, or every few updates
+        if (fOutputBuffer.size() >= kMaxBufferSize) {
+          FlushOutputBuffer();
+          gSystem->ProcessEvents(); // Less frequent event processing
+        }
       }
-      gSystem->ProcessEvents();
     }
 
     // Check if process is still running
@@ -386,7 +453,17 @@ public:
 
     if (result == fProcessPid) {
       // Process finished
-      AppendLog(Form("Process finished with status %d", WEXITSTATUS(status)));
+      if (!fSilentMode) {
+        FlushOutputBuffer(); // Flush any remaining output
+      }
+
+      if (WIFEXITED(status)) {
+        AppendLog(
+            Form("Process completed with exit code %d", WEXITSTATUS(status)));
+      } else if (WIFSIGNALED(status)) {
+        AppendLog(Form("Process terminated by signal %d", WTERMSIG(status)));
+      }
+
       fOutputTimer->Stop();
       CleanupProcess();
       fRunButton->SetEnabled(kTRUE);
@@ -450,4 +527,4 @@ public:
   ClassDef(OzoneGUI, 0);
 };
 
-void ozone_gui() { new OzoneGUI(gClient->GetRoot(), 500, 600); }
+void ozone_gui() { new OzoneGUI(gClient->GetRoot(), 500, 650); }
