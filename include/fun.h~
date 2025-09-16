@@ -1,0 +1,65 @@
+
+double fdh(int nn){
+  double ang = (360/365.0)*(284+nn);
+  ang = ang*TMath::Pi()/180.0;
+  //return 23.45*TMath::Sin(ang); // en grados
+  return 1/180.0*TMath::Pi()*23.45*TMath::Sin(ang); // en radianes
+}
+
+// tr: tiempo de reloj, nn numero del dia, 
+// ll: longitud del lugar (-74.04min para bogota)
+//
+double fH(int nn, double ttr, double ll){
+  
+  double LSTM = 15.0*(ll/15.0);
+  double D = 360.0/365.0*(nn-81); // this is in deg
+  D = D/180.0*(TMath::Pi());
+  double ET = 9.87*TMath::Sin(2.0*D) - 7.53*TMath::Cos(D)-1.5*TMath::Sin(D);
+  //  double ET = 9.87*TMath::Sin(nn) - 7.53*TMath::Cos(nn)-1.5*TMath::Sin(nn);
+  double AST;
+  AST = ttr + 4.0*(LSTM-ll)/60.0+ET/60.0;
+
+  return AST;
+}
+
+double fws(double hh){
+  double ang = 15*(12-hh);
+  //return ang; // grados
+  return ang*(1/180.0)*TMath::Pi(); // radianes
+  
+}
+
+double fczh(double tth, double ddh, double wws){
+  return TMath::Cos(tth)*TMath::Cos(ddh)*TMath::Cos(wws)
+    + TMath::Sin(tth)*TMath::Sin(ddh);
+}
+
+double fRoR2(double hh, int nn){
+  double a0=1.00011;
+  double a1=0.034221;
+  double a2=0.00128;
+  double a3=0.000719;
+  double a4=0.000077;
+  double ang = 360*nn/365.0;
+  ang = ang*(1/180.0)*TMath::Pi(); // radianes
+  //return ang;
+  return 1 + 0.033*TMath::Cos(ang);
+  //return a0 + a1*TMath::Cos(hh) + a2*TMath::Sin(hh) + a3*TMath::Cos(2*hh) + a4*TMath::Sin(2*hh);
+}
+
+//gg aparece como gama en las ecuaciones pero en el paper como H
+
+
+
+
+double fGI_se(double RRoR2, double cczh){
+  return RRoR2*cczh;
+}
+
+double fo3_rob(double zo, double re, double cczh){
+  double num = (1 + (zo/re));
+  double den = (cczh*cczh + 2*zo/re);
+  den = TMath::Sqrt(den);
+  return num/den;
+}
+
