@@ -74,12 +74,28 @@ private:
   TString fCurrentGraphPath;
   TFile *fCurrentFile;                    // Keep file open
   std::vector<TObject *> fCurrentObjects; // Keep objects in memory
+  TGTextEntry *fFolderFilterEntry;
+  TGTextButton *fClearFilterButton;
+  TString fCurrentFilter;
+
+  // New macro runner elements
+  TGNumberEntry *fMacroParam1, *fMacroParam3;
+  TGTextEntry *fMacroParam2;
+  TGTextButton *fRunMacroButton, *fCancelMacroButton;
+  TGTextView *fMacroLogView;
+  pid_t fMacroPid;
+  TTimer *fMacroTimer;
+  Bool_t fMacroRunning;
+  std::chrono::time_point<std::chrono::steady_clock> fMacroStartTime;
+
+  int fMacroPipeFd;
 
 public:
   OzoneGUI(const TGWindow *p, UInt_t w, UInt_t h)
       : TGMainFrame(p, w, h), fProcessPid(-1), fOutputTimer(nullptr),
         fProcessRunning(kFALSE), fSilentMode(kFALSE),
-        fNotificationsEnabled(kTRUE), fCurrentFile(nullptr) {
+        fNotificationsEnabled(kTRUE), fCurrentFile(nullptr), fMacroPid(-1),
+        fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroPipeFd(-1) {
 
     // Initialize pipe
     fPipeFd[0] = fPipeFd[1] = -1;
@@ -95,8 +111,11 @@ public:
 
     // ======== GRAPH VIEWER TAB ========
     TGCompositeFrame *graphTab = fMainTabs->AddTab("Graph Viewer");
-
     CreateGraphInterface(graphTab);
+
+    // ======== MACRO RUNNER TAB ========
+    TGCompositeFrame *macroTab = fMainTabs->AddTab("Macro Runner");
+    CreateMacroInterface(macroTab);
 
     AddFrame(fMainTabs,
              new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
@@ -331,6 +350,41 @@ public:
     parent->AddFrame(pathFrame,
                      new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 5));
 
+    // -------- NEW: Folder Filter Section --------
+    TGGroupFrame *filterFrame = new TGGroupFrame(parent, "Folder Filter");
+    TGHorizontalFrame *filterHFrame = new TGHorizontalFrame(filterFrame);
+
+    filterHFrame->AddFrame(
+        new TGLabel(filterHFrame, "Filter:"),
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+
+    fFolderFilterEntry = new TGTextEntry(filterHFrame, new TGTextBuffer(100));
+    fFolderFilterEntry->SetText("");
+    fFolderFilterEntry->Resize(300, 28);
+    fFolderFilterEntry->Connect("TextChanged(const char*)", "OzoneGUI", this,
+                                "OnFilterChanged(const char*)");
+    fFolderFilterEntry->Connect("ReturnPressed()", "OzoneGUI", this,
+                                "ApplyFilter()");
+    filterHFrame->AddFrame(fFolderFilterEntry,
+                           new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+
+    TGTextButton *applyFilterBtn = new TGTextButton(filterHFrame, "Apply");
+    applyFilterBtn->Resize(60, 28);
+    applyFilterBtn->Connect("Clicked()", "OzoneGUI", this, "ApplyFilter()");
+    filterHFrame->AddFrame(applyFilterBtn,
+                           new TGLayoutHints(kLHintsRight, 5, 5, 5, 5));
+
+    fClearFilterButton = new TGTextButton(filterHFrame, "Clear");
+    fClearFilterButton->Resize(60, 28);
+    fClearFilterButton->Connect("Clicked()", "OzoneGUI", this, "ClearFilter()");
+    filterHFrame->AddFrame(fClearFilterButton,
+                           new TGLayoutHints(kLHintsRight, 5, 5, 5, 5));
+
+    filterFrame->AddFrame(filterHFrame,
+                          new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+    parent->AddFrame(filterFrame,
+                     new TGLayoutHints(kLHintsExpandX, 10, 10, 5, 5));
+
     // -------- Folder and File Selection --------
     TGHorizontalFrame *listFrame = new TGHorizontalFrame(parent);
 
@@ -377,14 +431,107 @@ public:
         canvasFrame,
         new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 5, 10));
   }
+  void CreateMacroInterface(TGCompositeFrame *parent) {
+    // -------- Macro Parameters Section --------
+    TGGroupFrame *paramFrame = new TGGroupFrame(parent, "Macro Parameters");
+
+    // Parameter 1 (number)
+    TGHorizontalFrame *param1Frame = new TGHorizontalFrame(paramFrame);
+    param1Frame->AddFrame(
+        new TGLabel(param1Frame, "Parameter 1 (number):"),
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    fMacroParam1 =
+        new TGNumberEntry(param1Frame, 7, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 100);
+    fMacroParam1->Resize(100, 28);
+    param1Frame->AddFrame(
+        fMacroParam1,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    paramFrame->AddFrame(param1Frame,
+                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+
+    // Parameter 2 (string)
+    TGHorizontalFrame *param2Frame = new TGHorizontalFrame(paramFrame);
+    param2Frame->AddFrame(
+        new TGLabel(param2Frame, "Parameter 2 (location):"),
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    fMacroParam2 = new TGTextEntry(param2Frame, new TGTextBuffer(50));
+    fMacroParam2->SetText("BOG");
+    fMacroParam2->Resize(100, 28);
+    param2Frame->AddFrame(
+        fMacroParam2,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    paramFrame->AddFrame(param2Frame,
+                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+
+    // Parameter 3 (double)
+    TGHorizontalFrame *param3Frame = new TGHorizontalFrame(paramFrame);
+    param3Frame->AddFrame(
+        new TGLabel(param3Frame, "Parameter 3 (double):"),
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    fMacroParam3 =
+        new TGNumberEntry(param3Frame, 1.1, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
+    fMacroParam3->Resize(100, 28);
+    param3Frame->AddFrame(
+        fMacroParam3,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    paramFrame->AddFrame(param3Frame,
+                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+
+    parent->AddFrame(paramFrame,
+                     new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 5));
+
+    // -------- Run and Cancel Buttons --------
+    TGHorizontalFrame *btnFrame = new TGHorizontalFrame(parent);
+
+    fRunMacroButton = new TGTextButton(btnFrame, "&Run Macro");
+    fRunMacroButton->Resize(120, 28);
+    fRunMacroButton->Connect("Clicked()", "OzoneGUI", this, "RunMacro()");
+    btnFrame->AddFrame(fRunMacroButton,
+                       new TGLayoutHints(kLHintsCenterX, 5, 5, 10, 10));
+
+    fCancelMacroButton = new TGTextButton(btnFrame, "&Cancel");
+    fCancelMacroButton->Resize(80, 28);
+    fCancelMacroButton->Connect("Clicked()", "OzoneGUI", this, "CancelMacro()");
+    fCancelMacroButton->SetEnabled(kFALSE);
+    btnFrame->AddFrame(fCancelMacroButton,
+                       new TGLayoutHints(kLHintsCenterX, 5, 5, 10, 10));
+
+    parent->AddFrame(btnFrame, new TGLayoutHints(kLHintsCenterX));
+
+    // -------- Macro Log Output --------
+    TGGroupFrame *logFrame = new TGGroupFrame(parent, "Macro Log");
+    fMacroLogView = new TGTextView(logFrame, 400, 200);
+    logFrame->AddFrame(
+        fMacroLogView,
+        new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
+    parent->AddFrame(
+        logFrame,
+        new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 5, 10));
+  }
 
   virtual ~OzoneGUI() {
     if (fOutputTimer) {
       fOutputTimer->TurnOff();
       delete fOutputTimer;
     }
+    if (fMacroTimer) {
+      fMacroTimer->TurnOff();
+      delete fMacroTimer;
+    }
     CleanupProcess();
     CleanupGraphs();
+    // Cleanup macro process if running
+    if (fMacroRunning && fMacroPid != -1) {
+      kill(fMacroPid, SIGTERM);
+      waitpid(fMacroPid, nullptr, 0);
+    }
+    if (fMacroPipeFd != -1) {
+      close(fMacroPipeFd);
+    }
   }
 
   void CleanupGraphs() {
@@ -420,6 +567,18 @@ public:
     }
   }
 
+  void ApplyFilter() {
+    fCurrentFilter = fFolderFilterEntry->GetText();
+    fCurrentFilter.ToLower(); // Make filter case-insensitive
+    RefreshFolderList();
+  }
+
+  void ClearFilter() {
+    fFolderFilterEntry->SetText("");
+    fCurrentFilter = "";
+    RefreshFolderList();
+  }
+
   void RefreshFolderList() {
     fFolderListBox->RemoveAll();
     fCurrentFolders.clear();
@@ -434,6 +593,8 @@ public:
 
     struct dirent *dp;
     int entryId = 0;
+    int totalSkimFolders = 0;
+    int filteredFolders = 0;
 
     while ((dp = readdir(dirp)) != nullptr) {
       TString name = dp->d_name;
@@ -446,18 +607,42 @@ public:
       TString fullPath = TString(basePath) + "/" + name;
       struct stat st;
       if (stat(fullPath.Data(), &st) == 0 && S_ISDIR(st.st_mode)) {
-        if (name.Contains("skim_LAT") && name.Contains("LON")) {
-          fFolderListBox->AddEntry(name.Data(), entryId);
-          fCurrentFolders.push_back(name);
-          entryId++;
+        if (name.Contains("skim_")) {
+          totalSkimFolders++;
+
+          // Apply filter if one is set
+          bool passesFilter = true;
+          if (!fCurrentFilter.IsNull()) {
+            TString nameLower = name;
+            nameLower.ToLower();
+
+            // Check if the filter text is contained in the folder name
+            if (!nameLower.Contains(fCurrentFilter.Data())) {
+              passesFilter = false;
+            }
+          }
+
+          if (passesFilter) {
+            fFolderListBox->AddEntry(name.Data(), entryId);
+            fCurrentFolders.push_back(name);
+            entryId++;
+            filteredFolders++;
+          }
         }
       }
     }
     closedir(dirp);
 
     fFolderListBox->Layout();
-    fGraphInfoLabel->SetText(
-        Form("Found %d skim folders", (int)fCurrentFolders.size()));
+
+    // Update info label to show filter status
+    if (!fCurrentFilter.IsNull()) {
+      fGraphInfoLabel->SetText(Form("Filter '%s': %d of %d skim folders shown",
+                                    fCurrentFilter.Data(), filteredFolders,
+                                    totalSkimFolders));
+    } else {
+      fGraphInfoLabel->SetText(Form("Found %d skim folders", totalSkimFolders));
+    }
   }
 
   void OnFolderSelected(Int_t id) {
@@ -953,6 +1138,217 @@ public:
     fCancelButton->SetEnabled(kFALSE);
   }
 
+  // ======== MACRO RUNNER METHODS ========
+
+  void AppendMacroLog(const char *msg) {
+    fMacroLogView->AddLine(msg);
+    fMacroLogView->ShowBottom();
+  }
+
+  void RunMacro() {
+    if (fMacroRunning) {
+      AppendMacroLog("Macro is already running. Cancel it first.");
+      return;
+    }
+
+    // Check if macro file exists
+    if (gSystem->AccessPathName("linearRelStudyO3vsSn.C")) {
+      AppendMacroLog(
+          "Error: linearRelStudyO3vsSn.C not found in current directory.");
+      return;
+    }
+
+    // Get parameters
+    int param1 = (int)fMacroParam1->GetNumber();
+    TString param2 = fMacroParam2->GetText();
+    double param3 = fMacroParam3->GetNumber();
+
+    // Build ROOT command
+    TString rootCmd =
+        Form("root -l -b -q 'linearRelStudyO3vsSn.C(%d,\"%s\",%g)'", param1,
+             param2.Data(), param3);
+
+    AppendMacroLog(Form("Executing: %s", rootCmd.Data()));
+    AppendMacroLog("Starting macro execution...");
+
+    fMacroStartTime = std::chrono::steady_clock::now();
+
+    // Create pipes for output
+    int pipeFd[2];
+    if (pipe(pipeFd) == -1) {
+      AppendMacroLog("Error: failed to create pipe for macro output.");
+      return;
+    }
+
+    fMacroPid = fork();
+
+    if (fMacroPid == -1) {
+      AppendMacroLog("Error: failed to fork process for macro.");
+      close(pipeFd[0]);
+      close(pipeFd[1]);
+      return;
+    }
+
+    if (fMacroPid == 0) {
+      // Child process
+      close(pipeFd[0]);
+      dup2(pipeFd[1], STDOUT_FILENO);
+      dup2(pipeFd[1], STDERR_FILENO);
+      close(pipeFd[1]);
+
+      execl("/bin/sh", "sh", "-c", rootCmd.Data(), (char *)nullptr);
+      exit(1);
+    }
+
+    // Parent process
+    close(pipeFd[1]);
+
+    // Set pipe to non-blocking
+    int flags = fcntl(pipeFd[0], F_GETFL, 0);
+    fcntl(pipeFd[0], F_SETFL, flags | O_NONBLOCK);
+
+    // Store pipe fd (you'll need to add this as a member variable)
+    fMacroPipeFd = pipeFd[0];
+
+    // Start timer to check output
+    if (!fMacroTimer) {
+      fMacroTimer = new TTimer();
+      fMacroTimer->Connect("Timeout()", "OzoneGUI", this, "CheckMacroOutput()");
+    }
+    fMacroTimer->Start(500);
+
+    fMacroRunning = kTRUE;
+    fRunMacroButton->SetEnabled(kFALSE);
+    fCancelMacroButton->SetEnabled(kTRUE);
+  }
+
+  void CheckMacroOutput() {
+    if (!fMacroRunning)
+      return;
+
+    // Read output from pipe
+    if (fMacroPipeFd != -1) {
+      char buffer[4096];
+      ssize_t bytesRead;
+
+      while ((bytesRead = read(fMacroPipeFd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytesRead] = '\0';
+
+        char *line = strtok(buffer, "\n");
+        while (line != nullptr) {
+          AppendMacroLog(line);
+          line = strtok(nullptr, "\n");
+        }
+        gSystem->ProcessEvents();
+      }
+    }
+
+    // Check if process completed
+    int status;
+    pid_t result = waitpid(fMacroPid, &status, WNOHANG);
+
+    if (result == fMacroPid) {
+      auto endTime = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+          endTime - fMacroStartTime);
+      std::string durationStr = FormatDuration(duration);
+
+      int exitCode = 0;
+      if (WIFEXITED(status)) {
+        exitCode = WEXITSTATUS(status);
+        AppendMacroLog(Form("Macro completed with exit code %d (Duration: %s)",
+                            exitCode, durationStr.c_str()));
+
+        if (exitCode == 0) {
+          AppendMacroLog(
+              "You can use the Graph Viewer tab to browse the results.");
+        }
+      } else if (WIFSIGNALED(status)) {
+        exitCode = WTERMSIG(status);
+        AppendMacroLog(Form("Macro terminated by signal %d (Duration: %s)",
+                            exitCode, durationStr.c_str()));
+      }
+
+      // Cleanup
+      fMacroTimer->Stop();
+      if (fMacroPipeFd != -1) {
+        close(fMacroPipeFd);
+        fMacroPipeFd = -1;
+      }
+      fMacroPid = -1;
+      fMacroRunning = kFALSE;
+      fRunMacroButton->SetEnabled(kTRUE);
+      fCancelMacroButton->SetEnabled(kFALSE);
+
+      // Show notification
+      ShowCompletionNotification(exitCode, durationStr);
+
+    } else if (result == -1) {
+      AppendMacroLog("Error: lost connection to macro process.");
+      fMacroTimer->Stop();
+      if (fMacroPipeFd != -1) {
+        close(fMacroPipeFd);
+        fMacroPipeFd = -1;
+      }
+      fMacroPid = -1;
+      fMacroRunning = kFALSE;
+      fRunMacroButton->SetEnabled(kTRUE);
+      fCancelMacroButton->SetEnabled(kFALSE);
+    }
+  }
+
+  void CancelMacro() {
+    if (!fMacroRunning || fMacroPid == -1) {
+      AppendMacroLog("No macro process to cancel.");
+      return;
+    }
+
+    AppendMacroLog(Form("Cancelling macro process (PID: %d)...", fMacroPid));
+
+    if (kill(fMacroPid, SIGTERM) == 0) {
+      AppendMacroLog("Sent SIGTERM, waiting for process to terminate...");
+
+      for (int i = 0; i < 30; i++) {
+        int status;
+        pid_t result = waitpid(fMacroPid, &status, WNOHANG);
+        if (result == fMacroPid) {
+          AppendMacroLog("Macro process terminated gracefully.");
+          fMacroTimer->Stop();
+          if (fMacroPipeFd != -1) {
+            close(fMacroPipeFd);
+            fMacroPipeFd = -1;
+          }
+          fMacroPid = -1;
+          fMacroRunning = kFALSE;
+          fRunMacroButton->SetEnabled(kTRUE);
+          fCancelMacroButton->SetEnabled(kFALSE);
+          return;
+        }
+        gSystem->Sleep(100);
+        gSystem->ProcessEvents();
+      }
+
+      AppendMacroLog("Process didn't terminate gracefully, using SIGKILL...");
+      if (kill(fMacroPid, SIGKILL) == 0) {
+        waitpid(fMacroPid, nullptr, 0);
+        AppendMacroLog("Macro process killed successfully.");
+      } else {
+        AppendMacroLog("Error: failed to kill macro process.");
+      }
+    } else {
+      AppendMacroLog("Error: failed to send termination signal to macro.");
+    }
+
+    fMacroTimer->Stop();
+    if (fMacroPipeFd != -1) {
+      close(fMacroPipeFd);
+      fMacroPipeFd = -1;
+    }
+    fMacroPid = -1;
+    fMacroRunning = kFALSE;
+    fRunMacroButton->SetEnabled(kTRUE);
+    fCancelMacroButton->SetEnabled(kFALSE);
+  }
   ClassDef(OzoneGUI, 0);
 };
 
