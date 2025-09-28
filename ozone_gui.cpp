@@ -730,74 +730,110 @@ public:
 
     TCanvas *canvas = fGraphCanvas->GetCanvas();
     canvas->Clear();
-    canvas->Divide(2, 2); // Create 2x2 subdivision for multiple plots
 
     // Get list of all objects in file
     TList *keyList = fCurrentFile->GetListOfKeys();
     TIter next(keyList);
     TKey *key;
 
-    int padNum = 1;
-    int objectsDrawn = 0;
+    std::vector<TKey *> drawableKeys;
+    std::vector<TKey *> canvasKeys;
 
-    fGraphInfoLabel->SetText(
-        Form("File: %s", gSystem->BaseName(filename.Data())));
+    // Collect all drawable objects and canvases
+    while ((key = (TKey *)next())) {
+      TString className = key->GetClassName();
+      TString keyName = key->GetName();
 
-    while ((key = (TKey *)next()) && padNum <= 4) {
-      TObject *obj = key->ReadObj();
-      if (!obj)
-        continue;
+      std::cout << "Found: " << keyName << " (type: " << className << ")"
+                << std::endl;
 
-      // Clone the object to keep it in memory
-      TObject *clonedObj = obj->Clone();
-      fCurrentObjects.push_back(clonedObj);
-
-      canvas->cd(padNum);
-
-      if (clonedObj->InheritsFrom("TH1")) {
-        TH1 *hist = (TH1 *)clonedObj;
-        hist->SetDirectory(0); // Detach from file
-        hist->Draw();
-        objectsDrawn++;
-      } else if (clonedObj->InheritsFrom("TH2")) {
-        TH2 *hist2d = (TH2 *)clonedObj;
-        hist2d->SetDirectory(0); // Detach from file
-        hist2d->Draw("COLZ");
-        objectsDrawn++;
-      } else if (clonedObj->InheritsFrom("TGraph")) {
-        TGraph *graph = (TGraph *)clonedObj;
-        graph->Draw("ALP");
-        objectsDrawn++;
-      } else if (clonedObj->InheritsFrom("TGraph2D")) {
-        TGraph2D *graph2d = (TGraph2D *)clonedObj;
-        graph2d->Draw("TRI2Z");
-        objectsDrawn++;
-      } else {
-        // Remove from our list if not drawable
-        fCurrentObjects.pop_back();
-        delete clonedObj;
-        continue;
+      if (className == "TCanvas") {
+        canvasKeys.push_back(key);
+      } else if (className.Contains("TH1") || className.Contains("TH2") ||
+                 className.Contains("TGraph") ||
+                 className.Contains("TProfile")) {
+        drawableKeys.push_back(key);
       }
-
-      padNum++;
     }
 
-    if (objectsDrawn == 0) {
-      canvas->cd();
-      canvas->Clear();
-      TText *text = new TText(0.5, 0.5, "No drawable objects found in file");
-      text->SetTextAlign(22);
-      text->SetTextSize(0.04);
-      text->Draw();
-      fCurrentObjects.push_back(text);
+    // If we have canvases, display them instead of individual histograms
+    if (!canvasKeys.empty()) {
+      std::cout << "Found " << canvasKeys.size()
+                << " canvas(es), displaying canvases" << std::endl;
+
+      int nCanvases = canvasKeys.size();
+      int nCols = (nCanvases == 1) ? 1 : 2;
+      int nRows = (nCanvases + nCols - 1) / nCols;
+      canvas->Divide(nCols, nRows);
+
+      for (size_t i = 0; i < canvasKeys.size(); i++) {
+        TKey *canvasKey = canvasKeys[i];
+        TCanvas *storedCanvas = (TCanvas *)canvasKey->ReadObj();
+        if (!storedCanvas)
+          continue;
+
+        std::cout << "Drawing canvas: " << canvasKey->GetName() << std::endl;
+
+        canvas->cd(i + 1);
+        storedCanvas->DrawClonePad();
+
+        fCurrentObjects.push_back(storedCanvas);
+      }
+
+      fGraphInfoLabel->SetText(Form("File: %s - Displayed %d canvas(es)",
+                                    gSystem->BaseName(filename.Data()),
+                                    nCanvases));
+    } else {
+      // Fall back to individual histograms/graphs
+      std::cout << "No canvases found, displaying individual objects"
+                << std::endl;
+
+      int nObjects = drawableKeys.size();
+      int nCols = 2, nRows = 2;
+      if (nObjects > 4) {
+        nRows = (nObjects + 1) / 2;
+        if (nRows > 3)
+          nRows = 3;
+      }
+      canvas->Divide(nCols, nRows);
+
+      int objectsDrawn = 0;
+      for (size_t i = 0; i < drawableKeys.size() && i < (size_t)(nCols * nRows);
+           i++) {
+        TKey *drawKey = drawableKeys[i];
+        TObject *obj = drawKey->ReadObj();
+        if (!obj)
+          continue;
+
+        TObject *clonedObj = obj->Clone();
+        fCurrentObjects.push_back(clonedObj);
+
+        canvas->cd(i + 1);
+
+        if (clonedObj->InheritsFrom("TH1")) {
+          TH1 *hist = (TH1 *)clonedObj;
+          hist->SetDirectory(0);
+          hist->Draw();
+          objectsDrawn++;
+        } else if (clonedObj->InheritsFrom("TH2")) {
+          TH2 *hist2d = (TH2 *)clonedObj;
+          hist2d->SetDirectory(0);
+          hist2d->Draw("COLZ");
+          objectsDrawn++;
+        } else if (clonedObj->InheritsFrom("TGraph")) {
+          TGraph *graph = (TGraph *)clonedObj;
+          graph->Draw("ALP");
+          objectsDrawn++;
+        }
+      }
+
+      fGraphInfoLabel->SetText(Form("File: %s - Displayed %d objects",
+                                    gSystem->BaseName(filename.Data()),
+                                    objectsDrawn));
     }
 
     canvas->Update();
     canvas->Modified();
-
-    fGraphInfoLabel->SetText(Form("File: %s - Displayed %d objects",
-                                  gSystem->BaseName(filename.Data()),
-                                  objectsDrawn));
   }
 
   // ======== ORIGINAL PROCESSOR METHODS ========
