@@ -79,7 +79,16 @@ private:
   TString fCurrentFilter;
 
   // New macro runner elements
-  TGNumberEntry *fMacroParam1, *fMacroParam3;
+  TGComboBox *fMacroSelector; // Selector for choosing macro
+  TGCompositeFrame *fParam1Frame, *fParam2Frame, *fParam3Frame, *fParam4Frame,
+      *fParam5Frame, *fParam6Frame, *fParam7Frame, *fParam8Frame, *fParam9Frame,
+      *fParam10Frame, *fParam11Frame;
+  TGLabel *fParam1Label, *fParam2Label, *fParam3Label, *fParam4Label,
+      *fParam5Label, *fParam6Label, *fParam7Label, *fParam8Label, *fParam9Label,
+      *fParam10Label, *fParam11Label; // Labels for parameters
+  TGNumberEntry *fMacroParam1, *fMacroParam3, *fMacroParam4, *fMacroParam5,
+      *fMacroParam6, *fMacroParam7, *fMacroParam8, *fMacroParam9,
+      *fMacroParam10, *fMacroParam11;
   TGTextEntry *fMacroParam2;
   TGTextButton *fRunMacroButton, *fCancelMacroButton;
   TGTextView *fMacroLogView;
@@ -95,7 +104,11 @@ public:
       : TGMainFrame(p, w, h), fProcessPid(-1), fOutputTimer(nullptr),
         fProcessRunning(kFALSE), fSilentMode(kFALSE),
         fNotificationsEnabled(kTRUE), fCurrentFile(nullptr), fMacroPid(-1),
-        fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroPipeFd(-1) {
+        fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroPipeFd(-1),
+        fParam1Frame(nullptr), fParam2Frame(nullptr), fParam3Frame(nullptr),
+        fParam4Frame(nullptr), fParam5Frame(nullptr), fParam6Frame(nullptr),
+        fParam7Frame(nullptr), fParam8Frame(nullptr), fParam9Frame(nullptr),
+        fParam10Frame(nullptr), fParam11Frame(nullptr) {
 
     // Initialize pipe
     fPipeFd[0] = fPipeFd[1] = -1;
@@ -139,6 +152,9 @@ public:
     // Initialize graph viewer with current directory
     fGraphPathEntry->SetText(gSystem->WorkingDirectory());
     RefreshFolderList();
+
+    // Initialize macro parameter visibility
+    UpdateMacroParameters();
   }
 
   void CreateProcessorInterface(TGCompositeFrame *parent) {
@@ -350,7 +366,7 @@ public:
     parent->AddFrame(pathFrame,
                      new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 5));
 
-    // -------- NEW: Folder Filter Section --------
+    // -------- Folder Filter Section --------
     TGGroupFrame *filterFrame = new TGGroupFrame(parent, "Folder Filter");
     TGHorizontalFrame *filterHFrame = new TGHorizontalFrame(filterFrame);
 
@@ -361,8 +377,6 @@ public:
     fFolderFilterEntry = new TGTextEntry(filterHFrame, new TGTextBuffer(100));
     fFolderFilterEntry->SetText("");
     fFolderFilterEntry->Resize(300, 28);
-    fFolderFilterEntry->Connect("TextChanged(const char*)", "OzoneGUI", this,
-                                "OnFilterChanged(const char*)");
     fFolderFilterEntry->Connect("ReturnPressed()", "OzoneGUI", this,
                                 "ApplyFilter()");
     filterHFrame->AddFrame(fFolderFilterEntry,
@@ -431,56 +445,212 @@ public:
         canvasFrame,
         new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 5, 10));
   }
+
   void CreateMacroInterface(TGCompositeFrame *parent) {
+    const int kWidgetHeight = 28;
+
+    // -------- Macro Selection --------
+    TGGroupFrame *macroFrame = new TGGroupFrame(parent, "Macro Selection");
+    TGHorizontalFrame *macroHFrame = new TGHorizontalFrame(macroFrame);
+
+    // Label frame for "Macro:"
+    TGHorizontalFrame *macroLabelFrame = new TGHorizontalFrame(macroHFrame);
+    macroLabelFrame->AddFrame(
+        new TGLabel(macroLabelFrame, "Macro:"),
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 10,
+                          5, 5));
+    macroLabelFrame->Resize(250, kWidgetHeight); // Wider label space
+    macroHFrame->AddFrame(
+        macroLabelFrame,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+
+    fMacroSelector = new TGComboBox(macroHFrame);
+    fMacroSelector->AddEntry("linearRelStudyO3vsSn.C", 1);
+    fMacroSelector->AddEntry("macroO3teoGlobalHttp.C", 2);
+    fMacroSelector->Select(1);
+    fMacroSelector->Resize(200, kWidgetHeight);
+    fMacroSelector->Connect("Selected(Int_t)", "OzoneGUI", this,
+                            "UpdateMacroParameters()");
+    macroHFrame->AddFrame(
+        fMacroSelector,
+        new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 5, 5, 5));
+
+    macroFrame->AddFrame(macroHFrame,
+                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+    parent->AddFrame(macroFrame,
+                     new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 5));
+
     // -------- Macro Parameters Section --------
     TGGroupFrame *paramFrame = new TGGroupFrame(parent, "Macro Parameters");
+    TGCompositeFrame *paramMatrix =
+        new TGCompositeFrame(paramFrame, 1, 1, kHorizontalFrame);
+    paramMatrix->SetLayoutManager(new TGMatrixLayout(
+        paramMatrix, 0, 2, 15, 10)); // Increased horizontal spacing
 
-    // Parameter 1 (number)
-    TGHorizontalFrame *param1Frame = new TGHorizontalFrame(paramFrame);
-    param1Frame->AddFrame(
-        new TGLabel(param1Frame, "Parameter 1 (number):"),
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+    // Parameter 1
+    fParam1Label = new TGLabel(paramMatrix, "Minimum number of events:");
+    paramMatrix->AddFrame(
+        fParam1Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
     fMacroParam1 =
-        new TGNumberEntry(param1Frame, 7, 6, -1, TGNumberFormat::kNESInteger,
+        new TGNumberEntry(paramMatrix, 4.60, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, -90.0, 90.0);
+    fMacroParam1->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam1,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 2
+    fParam2Label = new TGLabel(paramMatrix, "Location prefix:");
+    paramMatrix->AddFrame(
+        fParam2Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam2 = new TGTextEntry(paramMatrix, new TGTextBuffer(50));
+    fMacroParam2->SetText("BOG");
+    fMacroParam2->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam2,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 3
+    fParam3Label = new TGLabel(paramMatrix, "Alpha(scaling factor)");
+    paramMatrix->AddFrame(
+        fParam3Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam3 =
+        new TGNumberEntry(paramMatrix, -74.08, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, -180.0, 180.0);
+    fMacroParam3->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam3,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 4
+    fParam4Label = new TGLabel(paramMatrix, "Solar cycle period");
+    paramMatrix->AddFrame(
+        fParam4Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam4 =
+        new TGNumberEntry(paramMatrix, 11, 6, -1, TGNumberFormat::kNESInteger,
                           TGNumberFormat::kNEANonNegative,
                           TGNumberFormat::kNELLimitMinMax, 0, 100);
-    fMacroParam1->Resize(100, 28);
-    param1Frame->AddFrame(
-        fMacroParam1,
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    paramFrame->AddFrame(param1Frame,
-                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+    fMacroParam4->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam4,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
 
-    // Parameter 2 (string)
-    TGHorizontalFrame *param2Frame = new TGHorizontalFrame(paramFrame);
-    param2Frame->AddFrame(
-        new TGLabel(param2Frame, "Parameter 2 (location):"),
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    fMacroParam2 = new TGTextEntry(param2Frame, new TGTextBuffer(50));
-    fMacroParam2->SetText("BOG");
-    fMacroParam2->Resize(100, 28);
-    param2Frame->AddFrame(
-        fMacroParam2,
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    paramFrame->AddFrame(param2Frame,
-                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+    // Parameter 5
+    fParam5Label = new TGLabel(paramMatrix, "Linear fit option");
+    paramMatrix->AddFrame(
+        fParam5Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam5 =
+        new TGNumberEntry(paramMatrix, 1, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 100);
+    fMacroParam5->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam5,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
 
-    // Parameter 3 (double)
-    TGHorizontalFrame *param3Frame = new TGHorizontalFrame(paramFrame);
-    param3Frame->AddFrame(
-        new TGLabel(param3Frame, "Parameter 3 (double):"),
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    fMacroParam3 =
-        new TGNumberEntry(param3Frame, 1.1, 8, -1, TGNumberFormat::kNESReal,
+    // Parameter 6
+    fParam6Label = new TGLabel(paramMatrix, "Minimum ozone plot range");
+    paramMatrix->AddFrame(
+        fParam6Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam6 =
+        new TGNumberEntry(paramMatrix, 195, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 1000);
+    fMacroParam6->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam6,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 7
+    fParam7Label = new TGLabel(paramMatrix, "Maximum ozone plot range");
+    paramMatrix->AddFrame(
+        fParam7Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam7 =
+        new TGNumberEntry(paramMatrix, 345, 6, -1, TGNumberFormat::kNESInteger,
+                          TGNumberFormat::kNEANonNegative,
+                          TGNumberFormat::kNELLimitMinMax, 0, 1000);
+    fMacroParam7->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam7,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 8
+    fParam8Label = new TGLabel(paramMatrix, "Minimum form factor range");
+    paramMatrix->AddFrame(
+        fParam8Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam8 =
+        new TGNumberEntry(paramMatrix, 0.91, 8, -1, TGNumberFormat::kNESReal,
                           TGNumberFormat::kNEAAnyNumber,
-                          TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
-    fMacroParam3->Resize(100, 28);
-    param3Frame->AddFrame(
-        fMacroParam3,
-        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
-    paramFrame->AddFrame(param3Frame,
-                         new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
+                          TGNumberFormat::kNELLimitMinMax, -10.0, 10.0);
+    fMacroParam8->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam8,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
 
+    // Parameter 9
+    fParam9Label = new TGLabel(paramMatrix, "Maximum form factor range");
+    paramMatrix->AddFrame(
+        fParam9Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam9 =
+        new TGNumberEntry(paramMatrix, 1.27, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, -10.0, 10.0);
+    fMacroParam9->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam9,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 10
+    fParam10Label = new TGLabel(paramMatrix, "Minimum error plot range");
+    paramMatrix->AddFrame(
+        fParam10Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam10 =
+        new TGNumberEntry(paramMatrix, -0.03, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, -10.0, 10.0);
+    fMacroParam10->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam10,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    // Parameter 11
+    fParam11Label = new TGLabel(paramMatrix, "Maximum error plot range");
+    paramMatrix->AddFrame(
+        fParam11Label,
+        new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
+                          5, 5));
+    fMacroParam11 =
+        new TGNumberEntry(paramMatrix, -0.03, 8, -1, TGNumberFormat::kNESReal,
+                          TGNumberFormat::kNEAAnyNumber,
+                          TGNumberFormat::kNELLimitMinMax, -10.0, 10.0);
+    fMacroParam11->Resize(80, kWidgetHeight); // Smaller input
+    paramMatrix->AddFrame(
+        fMacroParam11,
+        new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 5, 5));
+
+    paramFrame->AddFrame(paramMatrix, new TGLayoutHints(kLHintsExpandX));
     parent->AddFrame(paramFrame,
                      new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 5));
 
@@ -488,13 +658,13 @@ public:
     TGHorizontalFrame *btnFrame = new TGHorizontalFrame(parent);
 
     fRunMacroButton = new TGTextButton(btnFrame, "&Run Macro");
-    fRunMacroButton->Resize(120, 28);
+    fRunMacroButton->Resize(120, kWidgetHeight);
     fRunMacroButton->Connect("Clicked()", "OzoneGUI", this, "RunMacro()");
     btnFrame->AddFrame(fRunMacroButton,
                        new TGLayoutHints(kLHintsCenterX, 5, 5, 10, 10));
 
     fCancelMacroButton = new TGTextButton(btnFrame, "&Cancel");
-    fCancelMacroButton->Resize(80, 28);
+    fCancelMacroButton->Resize(80, kWidgetHeight);
     fCancelMacroButton->Connect("Clicked()", "OzoneGUI", this, "CancelMacro()");
     fCancelMacroButton->SetEnabled(kFALSE);
     btnFrame->AddFrame(fCancelMacroButton,
@@ -511,8 +681,86 @@ public:
     parent->AddFrame(
         logFrame,
         new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 5, 10));
+
+    // Initialize parameter visibility and labels
+    UpdateMacroParameters();
   }
 
+  void UpdateMacroParameters() {
+    TGTextLBEntry *entry = (TGTextLBEntry *)fMacroSelector->GetSelectedEntry();
+    TString macroName = entry ? entry->GetTitle() : "";
+
+    // Helper function to show/hide parameter
+    auto setParamVisibility = [&](TGLabel *label, TGFrame *input, Bool_t show,
+                                  const char *labelText) {
+      if (show) {
+        if (label) {
+          label->SetText(labelText);
+          label->MapWindow();
+        }
+        if (input)
+          input->MapWindow();
+      } else {
+        if (label)
+          label->UnmapWindow();
+        if (input)
+          input->UnmapWindow();
+      }
+    };
+
+    if (macroName == "linearRelStudyO3vsSn.C") {
+      setParamVisibility(fParam1Label, fMacroParam1, kTRUE,
+                         "Minimum number of events");
+      setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
+      setParamVisibility(fParam3Label, fMacroParam3, kTRUE,
+                         "Alpha(scaling factor)");
+      setParamVisibility(fParam4Label, fMacroParam4, kFALSE, "");
+      setParamVisibility(fParam5Label, fMacroParam5, kFALSE, "");
+      setParamVisibility(fParam6Label, fMacroParam6, kFALSE, "");
+      setParamVisibility(fParam7Label, fMacroParam7, kFALSE, "");
+      setParamVisibility(fParam8Label, fMacroParam8, kFALSE, "");
+      setParamVisibility(fParam9Label, fMacroParam9, kFALSE, "");
+      setParamVisibility(fParam10Label, fMacroParam10, kFALSE, "");
+      setParamVisibility(fParam11Label, fMacroParam11, kFALSE, "");
+    } else if (macroName == "macroO3teoGlobalHttp.C") {
+      setParamVisibility(fParam1Label, fMacroParam1, kTRUE, "Latitude");
+      setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
+      setParamVisibility(fParam3Label, fMacroParam3, kTRUE, "Longitude");
+      setParamVisibility(fParam4Label, fMacroParam4, kTRUE,
+                         "Solar cycle period");
+      setParamVisibility(fParam5Label, fMacroParam5, kTRUE,
+                         "Linear fit option");
+      setParamVisibility(fParam6Label, fMacroParam6, kTRUE,
+                         "Minimum ozone plot range");
+      setParamVisibility(fParam7Label, fMacroParam7, kTRUE,
+                         "Maximum ozone plot range");
+      setParamVisibility(fParam8Label, fMacroParam8, kTRUE,
+                         "Minimum form factor range");
+      setParamVisibility(fParam9Label, fMacroParam9, kTRUE,
+                         "Maximum form factor range");
+      setParamVisibility(fParam10Label, fMacroParam10, kTRUE,
+                         "Minimum error plot range");
+      setParamVisibility(fParam11Label, fMacroParam11, kTRUE,
+                         "Maximum error plot range");
+    } else {
+      // Hide all parameters
+      setParamVisibility(fParam1Label, fMacroParam1, kFALSE, "");
+      setParamVisibility(fParam2Label, fMacroParam2, kFALSE, "");
+      setParamVisibility(fParam3Label, fMacroParam3, kFALSE, "");
+      setParamVisibility(fParam4Label, fMacroParam4, kFALSE, "");
+      setParamVisibility(fParam5Label, fMacroParam5, kFALSE, "");
+      setParamVisibility(fParam6Label, fMacroParam6, kFALSE, "");
+      setParamVisibility(fParam7Label, fMacroParam7, kFALSE, "");
+      setParamVisibility(fParam8Label, fMacroParam8, kFALSE, "");
+      setParamVisibility(fParam9Label, fMacroParam9, kFALSE, "");
+      setParamVisibility(fParam10Label, fMacroParam10, kFALSE, "");
+      setParamVisibility(fParam11Label, fMacroParam11, kFALSE, "");
+    }
+
+    // Force layout update
+    Layout();
+    gClient->NeedRedraw(this);
+  }
   virtual ~OzoneGUI() {
     if (fOutputTimer) {
       fOutputTimer->TurnOff();
@@ -1187,22 +1435,51 @@ public:
       return;
     }
 
-    // Check if macro file exists
-    if (gSystem->AccessPathName("linearRelStudyO3vsSn.C")) {
-      AppendMacroLog(
-          "Error: linearRelStudyO3vsSn.C not found in current directory.");
+    // Get selected macro
+    TGTextLBEntry *entry = (TGTextLBEntry *)fMacroSelector->GetSelectedEntry();
+    TString macroName = entry ? entry->GetTitle() : "";
+    if (macroName.IsNull()) {
+      AppendMacroLog("Error: No macro selected.");
       return;
     }
 
-    // Get parameters
-    int param1 = (int)fMacroParam1->GetNumber();
-    TString param2 = fMacroParam2->GetText();
-    double param3 = fMacroParam3->GetNumber();
+    // Check if macro file exists
+    if (gSystem->AccessPathName(macroName)) {
+      AppendMacroLog(
+          Form("Error: %s not found in current directory.", macroName.Data()));
+      return;
+    }
 
-    // Build ROOT command
-    TString rootCmd =
-        Form("root -l -b -q 'linearRelStudyO3vsSn.C(%d,\"%s\",%g)'", param1,
-             param2.Data(), param3);
+    // Build ROOT command based on selected macro
+    TString rootCmd;
+    if (macroName == "linearRelStudyO3vsSn.C") {
+      // Get parameters for linearRelStudyO3vsSn
+      int param1 = (int)fMacroParam1->GetNumber();
+      TString param2 = fMacroParam2->GetText();
+      double param3 = fMacroParam3->GetNumber();
+      rootCmd = Form("root -l -b -q 'linearRelStudyO3vsSn.C(%d,\"%s\",%g)'",
+                     param1, param2.Data(), param3);
+    } else if (macroName == "macroO3teoGlobalHttp.C") {
+      // Get parameters for macroO3teoGlobalHttp
+      double lat = fMacroParam1->GetNumber();
+      double lon = fMacroParam3->GetNumber();
+      TString loc = fMacroParam2->GetText();
+      int param4 = (int)fMacroParam4->GetNumber();
+      int param5 = (int)fMacroParam5->GetNumber();
+      int param6 = (int)fMacroParam6->GetNumber();
+      int param7 = (int)fMacroParam7->GetNumber();
+      double param8 = fMacroParam8->GetNumber();
+      double param9 = fMacroParam9->GetNumber();
+      double param10 = fMacroParam10->GetNumber();
+      rootCmd =
+          Form("root -l -b -q "
+               "'macroO3teoGlobalHttp.C(%g,%g,\"%s\",%d,%d,%d,%d,%g,%g,%g)'",
+               lat, lon, loc.Data(), param4, param5, param6, param7, param8,
+               param9, param10);
+    } else {
+      AppendMacroLog("Error: Unknown macro selected.");
+      return;
+    }
 
     AppendMacroLog(Form("Executing: %s", rootCmd.Data()));
     AppendMacroLog("Starting macro execution...");
@@ -1243,7 +1520,7 @@ public:
     int flags = fcntl(pipeFd[0], F_GETFL, 0);
     fcntl(pipeFd[0], F_SETFL, flags | O_NONBLOCK);
 
-    // Store pipe fd (you'll need to add this as a member variable)
+    // Store pipe fd
     fMacroPipeFd = pipeFd[0];
 
     // Start timer to check output
