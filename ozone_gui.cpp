@@ -489,6 +489,7 @@ public:
 
     // Parameter 1
     fParam1Label = new TGLabel(paramMatrix, "Minimum number of events:");
+    fParam1Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam1Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -504,6 +505,7 @@ public:
 
     // Parameter 2
     fParam2Label = new TGLabel(paramMatrix, "Location prefix:");
+    fParam2Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam2Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -517,6 +519,7 @@ public:
 
     // Parameter 3
     fParam3Label = new TGLabel(paramMatrix, "Alpha(scaling factor)");
+    fParam3Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam3Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -532,6 +535,7 @@ public:
 
     // Parameter 4
     fParam4Label = new TGLabel(paramMatrix, "Solar cycle period");
+    fParam4Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam4Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -547,6 +551,7 @@ public:
 
     // Parameter 5
     fParam5Label = new TGLabel(paramMatrix, "Linear fit option");
+    fParam5Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam5Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -562,6 +567,7 @@ public:
 
     // Parameter 6
     fParam6Label = new TGLabel(paramMatrix, "Minimum ozone plot range");
+    fParam6Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam6Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -577,6 +583,7 @@ public:
 
     // Parameter 7
     fParam7Label = new TGLabel(paramMatrix, "Maximum ozone plot range");
+    fParam7Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam7Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -592,6 +599,7 @@ public:
 
     // Parameter 8
     fParam8Label = new TGLabel(paramMatrix, "Minimum form factor range");
+    fParam8Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam8Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -607,6 +615,7 @@ public:
 
     // Parameter 9
     fParam9Label = new TGLabel(paramMatrix, "Maximum form factor range");
+    fParam9Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam9Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -622,6 +631,7 @@ public:
 
     // Parameter 10
     fParam10Label = new TGLabel(paramMatrix, "Minimum error plot range");
+    fParam10Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam10Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
@@ -637,6 +647,7 @@ public:
 
     // Parameter 11
     fParam11Label = new TGLabel(paramMatrix, "Maximum error plot range");
+    fParam11Label->SetTextJustify(kTextLeft);
     paramMatrix->AddFrame(
         fParam11Label,
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
