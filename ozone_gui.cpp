@@ -720,6 +720,10 @@ public:
     };
 
     if (macroName == "linearRelStudyO3vsSn.C") {
+      fMacroParam1->SetFormat(TGNumberFormat::kNESInteger,
+                              TGNumberFormat::kNEANonNegative);
+      fMacroParam1->SetLimits(TGNumberFormat::kNELLimitMinMax, 0, 100000);
+      fMacroParam1->SetIntNumber(10); // default integer
       setParamVisibility(fParam1Label, fMacroParam1, kTRUE,
                          "Minimum number of events");
       setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
@@ -734,6 +738,57 @@ public:
       setParamVisibility(fParam10Label, fMacroParam10, kFALSE, "");
       setParamVisibility(fParam11Label, fMacroParam11, kFALSE, "");
     } else if (macroName == "macroO3teoGlobalHttp.C") {
+      fMacroParam1->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam1->SetLimits(TGNumberFormat::kNELLimitMinMax, -90.0, 90.0);
+      fMacroParam1->SetNumber(4.60);
+      // Location prefix (string)
+      fMacroParam2->SetText("BOG");
+      // Longitude
+      fMacroParam3->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam3->SetLimits(TGNumberFormat::kNELLimitMinMax, -180.0, 180.0);
+      fMacroParam3->SetNumber(151.21);
+      // Solar cycle period (int)
+      fMacroParam4->SetFormat(TGNumberFormat::kNESInteger,
+                              TGNumberFormat::kNEAPositive);
+      fMacroParam4->SetLimits(TGNumberFormat::kNELLimitMinMax, 1, 20);
+      fMacroParam4->SetNumber(11);
+      // Linear fit option (int)
+      fMacroParam5->SetFormat(TGNumberFormat::kNESInteger,
+                              TGNumberFormat::kNEAPositive);
+      fMacroParam5->SetLimits(TGNumberFormat::kNELLimitMinMax, 0, 1);
+      fMacroParam5->SetNumber(0);
+      // Minimum ozone plot range (float)
+      fMacroParam6->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam6->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 600.0);
+      fMacroParam6->SetNumber(0.0);
+      // Maximum ozone plot range (float)
+      fMacroParam7->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam7->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 600.0);
+      fMacroParam7->SetNumber(600.0);
+      // Minimum form factor range (float)
+      fMacroParam8->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam8->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
+      fMacroParam8->SetNumber(0.0);
+      // Maximum form factor range (float)
+      fMacroParam9->SetFormat(TGNumberFormat::kNESReal,
+                              TGNumberFormat::kNEAAnyNumber);
+      fMacroParam9->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
+      fMacroParam9->SetNumber(10.0);
+      // Minimum error plot range (float)
+      fMacroParam10->SetFormat(TGNumberFormat::kNESReal,
+                               TGNumberFormat::kNEAAnyNumber);
+      fMacroParam10->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 100.0);
+      fMacroParam10->SetNumber(0.0);
+      // Maximum error plot range (float)
+      fMacroParam11->SetFormat(TGNumberFormat::kNESReal,
+                               TGNumberFormat::kNEAAnyNumber);
+      fMacroParam11->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 100.0);
+      fMacroParam11->SetNumber(100.0);
       setParamVisibility(fParam1Label, fMacroParam1, kTRUE, "Latitude");
       setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
       setParamVisibility(fParam3Label, fMacroParam3, kTRUE, "Longitude");
