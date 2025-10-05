@@ -16,6 +16,7 @@
 #include "TList.h"
 #include "TMath.h"
 #include "TRootEmbeddedCanvas.h"
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <vector>
@@ -28,6 +29,7 @@ private:
   TGComboBox *fGraphCombo;
   TGTextButton *fLoadButton;
   TGTextButton *fExitButton;
+  TGTextButton *fExportButton;
   TGCheckButton *fMultiYearCheck;
   TGColorSelect *fHistoryColorSelect;
   TGColorSelect *fTeoColorSelect;
@@ -40,10 +42,11 @@ private:
   TGCheckButton *fConnectHistoryCheck; // New checkbox
   TGraph *fGrHistory;                  // Stored clone for redraw
   TGraph *fGrTeo;                      // Stored clone for redraw (for overlay)
-  bool fConnectHistory;                // Toggle state
   TGCheckButton *fConnectTeoCheck;     // New checkbox for Teo lines
-  bool fConnectTeo;                    // Toggle state for Teo lines
-  //
+  TGCheckButton *fExportAllYearsCheck;
+  bool fConnectTeo;     // Toggle state for Teo lines
+  bool fConnectHistory; // Toggle state
+
 public:
   O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h, const char *basedir = ".");
   virtual ~O3ViewerGUI();
@@ -65,6 +68,7 @@ public:
   void CloseWindow();
   void OnConnectHistoryToggled();
   void OnConnectTeoToggled();
+  void ExportData();
 
   ClassDef(O3ViewerGUI, 0)
 };
@@ -80,6 +84,7 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fConnectHistory = true;
   fConnectTeoCheck = nullptr;
   fConnectTeo = true;
+  fExportAllYearsCheck = nullptr;
 
   SetWindowName("O3 Global Analysis Viewer");
   SetCleanup(kDeepCleanup);
@@ -219,6 +224,18 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
   rightControl->AddFrame(
       fLoadButton, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+
+  fExportAllYearsCheck = new TGCheckButton(rightControl, "Export All Years");
+  fExportAllYearsCheck->SetOn(kFALSE); // Default: single year
+  rightControl->AddFrame(
+      fExportAllYearsCheck,
+      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+
+  fExportButton = new TGTextButton(rightControl, "&Export Data", 202);
+  fExportButton->Connect("Clicked()", "O3ViewerGUI", this, "ExportData()");
+  rightControl->AddFrame(
+      fExportButton,
+      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
 
   fExitButton = new TGTextButton(rightControl, "&Exit", 201);
   fExitButton->Connect("Clicked()", "O3ViewerGUI", this, "CloseWindow()");
@@ -1195,6 +1212,288 @@ void O3ViewerGUI::LoadGraph() {
       canvas->Modified();
       canvas->Update();
     }
+  }
+}
+
+void O3ViewerGUI::ExportData() {
+  if (!fRootFile || fRootFile->IsZombie()) {
+    fStatusLabel->SetText("Error: No file loaded!");
+    return;
+  }
+
+  Int_t catId = fCategoryCombo->GetSelected();
+  TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+  TGTextLBEntry *locEntry = (TGTextLBEntry *)fLocationCombo->GetSelectedEntry();
+
+  if (!locEntry) {
+    fStatusLabel->SetText("Error: No location selected!");
+    return;
+  }
+
+  TString locName = locEntry->GetText()->GetString();
+
+  // Check if exporting all years
+  bool exportAllYears = fExportAllYearsCheck->IsOn();
+
+  std::vector<TString> yearsToExport;
+
+  if (exportAllYears) {
+    // Collect all years from the file
+    TIter next(fRootFile->GetListOfKeys());
+    TKey *key;
+    while ((key = (TKey *)next())) {
+      TString name = key->GetName();
+      if (name.IsDigit()) {
+        yearsToExport.push_back(name);
+      }
+    }
+
+    if (yearsToExport.size() == 0) {
+      fStatusLabel->SetText("Error: No years found in file!");
+      return;
+    }
+  } else {
+    // Export only selected year
+    TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+    if (!yearEntry) {
+      fStatusLabel->SetText("Error: Please select a year!");
+      return;
+    }
+    yearsToExport.push_back(yearEntry->GetText()->GetString());
+  }
+
+  if (!graphEntry) {
+    fStatusLabel->SetText("Error: Please select a graph!");
+    return;
+  }
+
+  TString graphName = graphEntry->GetText()->GetString();
+
+  // Export for superposition mode (category 6) or individual History/Teo
+  if (catId == 6) {
+    // Superposition mode - export both History and Teo
+
+    // Create output filename
+    TString outputFile;
+    if (exportAllYears) {
+      outputFile =
+          Form("%s_%s_AllYears_export.txt", locName.Data(), graphName.Data());
+    } else {
+      outputFile = Form("%s_%s_year%s_export.txt", locName.Data(),
+                        graphName.Data(), yearsToExport[0].Data());
+    }
+
+    std::ofstream outFile(outputFile.Data());
+    if (!outFile.is_open()) {
+      fStatusLabel->SetText("Error: Cannot create export file!");
+      return;
+    }
+
+    // Write header
+    outFile << "# Location: " << locName.Data() << std::endl;
+    outFile << "# Graph: " << graphName.Data() << std::endl;
+    if (exportAllYears) {
+      outFile << "# Years: ALL (" << yearsToExport.size() << " years)"
+              << std::endl;
+    } else {
+      outFile << "# Year: " << yearsToExport[0].Data() << std::endl;
+    }
+    outFile << "# Export Date: " << TDatime().AsString() << std::endl;
+    outFile << "#" << std::endl;
+
+    int totalHistoryPoints = 0;
+    int totalTeoPoints = 0;
+    int yearsWithHistory = 0;
+    int yearsWithTeo = 0;
+
+    // Loop through all years
+    for (size_t iYear = 0; iYear < yearsToExport.size(); iYear++) {
+      TString year = yearsToExport[iYear];
+
+      // Load History O3 data
+      TString historyPath =
+          Form("%s/history/%s", year.Data(), graphName.Data());
+      TObject *historyObj = fRootFile->Get(historyPath.Data());
+
+      // Load O3 Teo data
+      TString teoPath = Form("%s/comp/%s", year.Data(), graphName.Data());
+      TObject *teoObj = fRootFile->Get(teoPath.Data());
+
+      // Export History O3 for this year
+      if (historyObj && historyObj->InheritsFrom("TGraph")) {
+        TGraph *grHistory = (TGraph *)historyObj;
+        if (grHistory->GetN() > 0) {
+          if (totalHistoryPoints == 0) {
+            outFile << "# ===== HISTORY O3 DATA =====" << std::endl;
+            outFile << "# Year\tPoint\tX\tY" << std::endl;
+          }
+
+          for (Int_t i = 0; i < grHistory->GetN(); i++) {
+            Double_t x, y;
+            grHistory->GetPoint(i, x, y);
+            outFile << year.Data() << "\t" << i << "\t" << x << "\t" << y
+                    << std::endl;
+          }
+          totalHistoryPoints += grHistory->GetN();
+          yearsWithHistory++;
+        }
+      }
+
+      // Export O3 Teo for this year
+      if (teoObj && teoObj->InheritsFrom("TGraph")) {
+        TGraph *grTeo = (TGraph *)teoObj;
+        if (grTeo->GetN() > 0) {
+          if (totalTeoPoints == 0) {
+            outFile << std::endl;
+            outFile << "# ===== O3 TEO STUDY DATA =====" << std::endl;
+            outFile << "# Year\tPoint\tX\tY" << std::endl;
+          }
+
+          for (Int_t i = 0; i < grTeo->GetN(); i++) {
+            Double_t x, y;
+            grTeo->GetPoint(i, x, y);
+            outFile << year.Data() << "\t" << i << "\t" << x << "\t" << y
+                    << std::endl;
+          }
+          totalTeoPoints += grTeo->GetN();
+          yearsWithTeo++;
+        }
+      }
+    }
+
+    // Write summary at the end
+    outFile << std::endl;
+    outFile << "# ===== SUMMARY =====" << std::endl;
+    outFile << "# Years processed: " << yearsToExport.size() << std::endl;
+    outFile << "# History O3: " << yearsWithHistory << " years, "
+            << totalHistoryPoints << " total points" << std::endl;
+    outFile << "# O3 Teo Study: " << yearsWithTeo << " years, "
+            << totalTeoPoints << " total points" << std::endl;
+
+    outFile.close();
+
+    if (totalHistoryPoints > 0 || totalTeoPoints > 0) {
+      fStatusLabel->SetText(Form("Exported %d years to: %s",
+                                 (int)yearsToExport.size(), outputFile.Data()));
+      std::cout << "Data exported to: " << outputFile.Data() << std::endl;
+      std::cout << "  History points: " << totalHistoryPoints << std::endl;
+      std::cout << "  Teo points: " << totalTeoPoints << std::endl;
+    } else {
+      fStatusLabel->SetText("Error: No valid data to export!");
+    }
+
+  } else if (catId == 2 || catId == 3) {
+    // Export individual History O3 (cat 2) or O3 Teo Study (cat 3)
+
+    TString subdir = (catId == 2) ? "history" : "comp";
+    TString catName = (catId == 2) ? "HistoryO3" : "TeoO3";
+
+    // Create output filename
+    TString outputFile;
+    if (exportAllYears) {
+      outputFile = Form("%s_%s_%s_AllYears_export.txt", locName.Data(),
+                        catName.Data(), graphName.Data());
+    } else {
+      outputFile =
+          Form("%s_%s_%s_year%s_export.txt", locName.Data(), catName.Data(),
+               graphName.Data(), yearsToExport[0].Data());
+    }
+
+    std::ofstream outFile(outputFile.Data());
+    if (!outFile.is_open()) {
+      fStatusLabel->SetText("Error: Cannot create export file!");
+      return;
+    }
+
+    // Write header
+    outFile << "# Location: " << locName.Data() << std::endl;
+    outFile << "# Category: " << catName.Data() << std::endl;
+    outFile << "# Graph: " << graphName.Data() << std::endl;
+    if (exportAllYears) {
+      outFile << "# Years: ALL (" << yearsToExport.size() << " years)"
+              << std::endl;
+    } else {
+      outFile << "# Year: " << yearsToExport[0].Data() << std::endl;
+    }
+    outFile << "# Export Date: " << TDatime().AsString() << std::endl;
+    outFile << "#" << std::endl;
+
+    int totalPoints = 0;
+    int yearsWithData = 0;
+    bool isGraph = true;
+
+    // Loop through all years
+    for (size_t iYear = 0; iYear < yearsToExport.size(); iYear++) {
+      TString year = yearsToExport[iYear];
+      TString path =
+          Form("%s/%s/%s", year.Data(), subdir.Data(), graphName.Data());
+      TObject *obj = fRootFile->Get(path.Data());
+
+      if (!obj) {
+        if (yearsToExport.size() == 1) {
+          outFile.close();
+          fStatusLabel->SetText("Error: Object not found!");
+          return;
+        }
+        continue;
+      }
+
+      if (obj->InheritsFrom("TGraph")) {
+        TGraph *gr = (TGraph *)obj;
+        if (gr->GetN() > 0) {
+          if (totalPoints == 0) {
+            outFile << "# Year\tPoint\tX\tY" << std::endl;
+          }
+
+          for (Int_t i = 0; i < gr->GetN(); i++) {
+            Double_t x, y;
+            gr->GetPoint(i, x, y);
+            outFile << year.Data() << "\t" << i << "\t" << x << "\t" << y
+                    << std::endl;
+          }
+          totalPoints += gr->GetN();
+          yearsWithData++;
+        }
+      } else if (obj->InheritsFrom("TH1")) {
+        isGraph = false;
+        TH1 *h = (TH1 *)obj;
+        if (totalPoints == 0) {
+          outFile << "# Year\tBin\tBinCenter\tContent\tError" << std::endl;
+        }
+
+        for (Int_t i = 1; i <= h->GetNbinsX(); i++) {
+          outFile << year.Data() << "\t" << i << "\t" << h->GetBinCenter(i)
+                  << "\t" << h->GetBinContent(i) << "\t" << h->GetBinError(i)
+                  << std::endl;
+        }
+        totalPoints += h->GetNbinsX();
+        yearsWithData++;
+      }
+    }
+
+    // Write summary
+    outFile << std::endl;
+    outFile << "# ===== SUMMARY =====" << std::endl;
+    outFile << "# Years processed: " << yearsToExport.size() << std::endl;
+    outFile << "# Years with data: " << yearsWithData << std::endl;
+    outFile << "# Total " << (isGraph ? "points" : "bins") << ": "
+            << totalPoints << std::endl;
+
+    outFile.close();
+
+    if (totalPoints > 0) {
+      fStatusLabel->SetText(Form("Exported %d years to: %s",
+                                 (int)yearsToExport.size(), outputFile.Data()));
+      std::cout << "Data exported to: " << outputFile.Data() << std::endl;
+      std::cout << "  Total " << (isGraph ? "points" : "bins") << ": "
+                << totalPoints << std::endl;
+    } else {
+      fStatusLabel->SetText("Error: No valid data to export!");
+    }
+
+  } else {
+    fStatusLabel->SetText("Export only available for History O3, O3 Teo Study, "
+                          "or Superposition!");
   }
 }
 
