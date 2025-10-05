@@ -37,6 +37,10 @@ private:
   TString fBaseDir;
   Color_t fHistoryColor;
   Color_t fTeoColor;
+  TGCheckButton *fConnectHistoryCheck; // New checkbox
+  TGraph *fGrHistory;                  // Stored clone for redraw
+  TGraph *fGrTeo;                      // Stored clone for redraw (for overlay)
+  bool fConnectHistory;                // Toggle state
 
 public:
   O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h, const char *basedir = ".");
@@ -57,6 +61,7 @@ public:
   void OnHistoryColorSelected();
   void OnTeoColorSelected();
   void CloseWindow();
+  void OnConnectHistoryToggled();
 
   ClassDef(O3ViewerGUI, 0)
 };
@@ -65,6 +70,11 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
                          const char *basedir)
     : TGMainFrame(p, w, h), fRootFile(nullptr), fBaseDir(basedir),
       fHistoryColor(kBlue), fTeoColor(kRed) {
+  // Initialize new members after initializer list
+  fConnectHistoryCheck = nullptr;
+  fGrHistory = nullptr;
+  fGrTeo = nullptr;
+  fConnectHistory = true;
 
   SetWindowName("O3 Global Analysis Viewer");
   SetCleanup(kDeepCleanup);
@@ -185,7 +195,14 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
 
   rightControl->AddFrame(
       colorFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 2, 5));
-
+  fConnectHistoryCheck =
+      new TGCheckButton(rightControl, "Connect History Lines");
+  fConnectHistoryCheck->SetOn(kTRUE); // Default: connected
+  fConnectHistoryCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
+                                "OnConnectHistoryToggled()");
+  rightControl->AddFrame(
+      fConnectHistoryCheck,
+      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
   fLoadButton = new TGTextButton(rightControl, "&Load Graph", 200);
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
   rightControl->AddFrame(
@@ -224,6 +241,16 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
 }
 
 O3ViewerGUI::~O3ViewerGUI() {
+  // Cleanup stored graphs first
+  if (fGrHistory) {
+    delete fGrHistory;
+    fGrHistory = nullptr;
+  }
+  if (fGrTeo) {
+    delete fGrTeo;
+    fGrTeo = nullptr;
+  }
+
   if (fRootFile && fRootFile->IsOpen()) {
     fRootFile->Close();
     delete fRootFile;
@@ -473,6 +500,47 @@ void O3ViewerGUI::PopulateGraphs() {
   }
 }
 
+void O3ViewerGUI::OnConnectHistoryToggled() {
+  fConnectHistory = fConnectHistoryCheck->IsOn();
+  if (fGrHistory && fGrTeo) { // Only if in superposition and graphs exist
+    Int_t catId = fCategoryCombo->GetSelected();
+    if (catId == 6) { // Superposition mode
+      TCanvas *canvas = fEmbCanvas->GetCanvas();
+      canvas->Clear();
+      canvas->cd();
+      canvas->SetGrid();
+
+      bool drawnFirst = false;
+      TString drawOptHistory = fConnectHistory ? "APL" : "AP";
+
+      // Redraw History
+      if (fGrHistory->GetN() > 0) {
+        fGrHistory->Draw(drawOptHistory.Data());
+        drawnFirst = true;
+      }
+
+      // Redraw Teo on top
+      if (fGrTeo->GetN() > 0) {
+        if (drawnFirst) {
+          fGrTeo->Draw("PL SAME");
+        } else {
+          fGrTeo->Draw("PL");
+        }
+      }
+
+      // Legend (same as before)
+      TLegend *legend = new TLegend(0.7, 0.75, 0.9, 0.9);
+      legend->SetBorderSize(1);
+      legend->SetFillColor(0);
+      legend->AddEntry(fGrHistory, "History O3", "lp");
+      legend->AddEntry(fGrTeo, "O3 Teo Study", "lp");
+      legend->Draw();
+
+      canvas->Modified();
+      canvas->Update();
+    }
+  }
+}
 void O3ViewerGUI::OnCategorySelected() {
   Int_t catId = fCategoryCombo->GetSelected();
 
@@ -569,20 +637,32 @@ void O3ViewerGUI::LoadSuperposition() {
   bool historyDrawn = false;
   bool teoDrawn = false;
 
-  // Draw History O3 first (in selected color) - only if it has points
+  // Cleanup old graphs
+  if (fGrHistory) {
+    delete fGrHistory;
+    fGrHistory = nullptr;
+  }
+  if (fGrTeo) {
+    delete fGrTeo;
+    fGrTeo = nullptr;
+  }
+
+  // Draw/Store History O3 first (in selected color) - only if it has points
   if (historyObj && historyObj->InheritsFrom("TGraph")) {
-    TGraph *grHistory = (TGraph *)historyObj->Clone("gr_history");
-    if (grHistory->GetN() > 0) {
-      grHistory->SetLineColor(fHistoryColor);
-      grHistory->SetMarkerColor(fHistoryColor);
-      grHistory->SetMarkerStyle(20);
-      grHistory->SetMarkerSize(0.8);
-      grHistory->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
-      grHistory->Draw("APL");
+    fGrHistory = (TGraph *)historyObj->Clone("gr_history");
+    if (fGrHistory->GetN() > 0) {
+      fGrHistory->SetLineColor(fHistoryColor);
+      fGrHistory->SetMarkerColor(fHistoryColor);
+      fGrHistory->SetMarkerStyle(20);
+      fGrHistory->SetMarkerSize(0.8);
+      fGrHistory->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+      TString drawOpt = fConnectHistory ? "APL" : "AP";
+      fGrHistory->Draw(drawOpt.Data());
       drawnFirst = true;
       historyDrawn = true;
     } else {
-      delete grHistory; // Clean up empty clone
+      delete fGrHistory;
+      fGrHistory = nullptr;
       std::cout << "Warning: Empty History O3 graph for " << graphName.Data()
                 << " in year " << year.Data() << std::endl;
     }
@@ -603,24 +683,25 @@ void O3ViewerGUI::LoadSuperposition() {
     }
   }
 
-  // Draw O3 Teo Study (in selected color) - only if it has points
+  // Draw/Store O3 Teo Study (in selected color) - only if it has points
   if (teoObj && teoObj->InheritsFrom("TGraph")) {
-    TGraph *grTeo = (TGraph *)teoObj->Clone("gr_teo");
-    if (grTeo->GetN() > 0) {
-      grTeo->SetLineColor(fTeoColor);
-      grTeo->SetMarkerColor(fTeoColor);
-      grTeo->SetMarkerStyle(21);
-      grTeo->SetMarkerSize(0.8);
+    fGrTeo = (TGraph *)teoObj->Clone("gr_teo");
+    if (fGrTeo->GetN() > 0) {
+      fGrTeo->SetLineColor(fTeoColor);
+      fGrTeo->SetMarkerColor(fTeoColor);
+      fGrTeo->SetMarkerStyle(21);
+      fGrTeo->SetMarkerSize(0.8);
       if (drawnFirst) {
-        grTeo->Draw("PL SAME");
+        fGrTeo->Draw("PL SAME");
       } else {
-        grTeo->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
-        grTeo->Draw("APL");
+        fGrTeo->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+        fGrTeo->Draw("PL");
         drawnFirst = true;
       }
       teoDrawn = true;
     } else {
-      delete grTeo; // Clean up empty clone
+      delete fGrTeo;
+      fGrTeo = nullptr;
       std::cout << "Warning: Empty O3 Teo graph for " << graphName.Data()
                 << " in year " << year.Data() << std::endl;
     }
@@ -653,7 +734,7 @@ void O3ViewerGUI::LoadSuperposition() {
 
     if (historyDrawn) {
       if (historyObj->InheritsFrom("TGraph")) {
-        legend->AddEntry("gr_history", "History O3", "lp");
+        legend->AddEntry(fGrHistory, "History O3", "lp");
       } else if (historyObj->InheritsFrom("TH1")) {
         legend->AddEntry("h_history", "History O3", "l");
       }
@@ -661,7 +742,7 @@ void O3ViewerGUI::LoadSuperposition() {
 
     if (teoDrawn) {
       if (teoObj->InheritsFrom("TGraph")) {
-        legend->AddEntry("gr_teo", "O3 Teo Study", "lp");
+        legend->AddEntry(fGrTeo, "O3 Teo Study", "lp");
       } else if (teoObj->InheritsFrom("TH1")) {
         legend->AddEntry("h_teo", "O3 Teo Study", "l");
       }
