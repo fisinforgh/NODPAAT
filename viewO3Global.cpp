@@ -4,46 +4,67 @@
 #include "TFile.h"
 #include "TGButton.h"
 #include "TGClient.h"
+#include "TGColorSelect.h"
 #include "TGComboBox.h"
 #include "TGFrame.h"
 #include "TGLabel.h"
 #include "TGraph.h"
-#include "TH1F.h"
+#include "TH1.h"
 #include "TKey.h"
+#include "TLatex.h"
+#include "TLegend.h"
 #include "TList.h"
+#include "TMath.h"
 #include "TRootEmbeddedCanvas.h"
 #include <iostream>
+#include <set>
+#include <vector>
 
 class O3ViewerGUI : public TGMainFrame {
 private:
+  TGComboBox *fLocationCombo;
   TGComboBox *fCategoryCombo;
   TGComboBox *fYearCombo;
   TGComboBox *fGraphCombo;
   TGTextButton *fLoadButton;
   TGTextButton *fExitButton;
+  TGCheckButton *fMultiYearCheck;
+  TGColorSelect *fHistoryColorSelect;
+  TGColorSelect *fTeoColorSelect;
   TGLabel *fStatusLabel;
   TRootEmbeddedCanvas *fEmbCanvas;
   TFile *fRootFile;
-  TString fFileName;
+  TString fBaseDir;
+  Color_t fHistoryColor;
+  Color_t fTeoColor;
 
 public:
-  O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h, const char *filename);
+  O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h, const char *basedir = ".");
   virtual ~O3ViewerGUI();
 
+  void ScanLocations();
   void LoadFile();
   void PopulateYears();
   void PopulateGraphs();
   void LoadGraph();
+  void LoadMultiYearPanel();
+  void LoadSuperposition();
+  void DrawObject(TObject *obj, const char *path);
+  void OnLocationSelected();
   void OnCategorySelected();
   void OnYearSelected();
+  void OnMultiYearToggled();
+  void OnHistoryColorSelected();
+  void OnTeoColorSelected();
   void CloseWindow();
 
   ClassDef(O3ViewerGUI, 0)
 };
 
 O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
-                         const char *filename)
-    : TGMainFrame(p, w, h), fRootFile(nullptr), fFileName(filename) {
+                         const char *basedir)
+    : TGMainFrame(p, w, h), fRootFile(nullptr), fBaseDir(basedir),
+      fHistoryColor(kBlue), fTeoColor(kRed) {
 
   SetWindowName("O3 Global Analysis Viewer");
   SetCleanup(kDeepCleanup);
@@ -57,6 +78,20 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   // Left control panel
   TGVerticalFrame *leftControl = new TGVerticalFrame(controlFrame, w / 2, 150);
 
+  // Location selection
+  TGHorizontalFrame *locFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
+  TGLabel *locLabel = new TGLabel(locFrame, "Location:");
+  locFrame->AddFrame(
+      locLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+  fLocationCombo = new TGComboBox(locFrame, 99);
+  fLocationCombo->Resize(200, 20);
+  fLocationCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this,
+                          "OnLocationSelected()");
+  locFrame->AddFrame(fLocationCombo,
+                     new TGLayoutHints(kLHintsLeft, 5, 5, 5, 5));
+  leftControl->AddFrame(
+      locFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+
   // Category selection
   TGHorizontalFrame *catFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
   TGLabel *catLabel = new TGLabel(catFrame, "Category:");
@@ -69,6 +104,7 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fCategoryCombo->AddEntry("O3 Teo Study", 3);
   fCategoryCombo->AddEntry("O3 Teo Error", 4);
   fCategoryCombo->AddEntry("Individual Graphs", 5);
+  fCategoryCombo->AddEntry("Superposition (History + Teo)", 6);
   fCategoryCombo->Resize(200, 20);
   fCategoryCombo->Select(0);
   fCategoryCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this,
@@ -108,6 +144,48 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   // Right control panel - Buttons
   TGVerticalFrame *rightControl = new TGVerticalFrame(controlFrame, w / 2, 150);
 
+  // Multi-year checkbox
+  fMultiYearCheck = new TGCheckButton(rightControl, "Show All Years Panel");
+  fMultiYearCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
+                           "OnMultiYearToggled()");
+  rightControl->AddFrame(
+      fMultiYearCheck,
+      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+
+  // Color selection for superposition
+  TGLabel *colorTitle = new TGLabel(rightControl, "Superposition Colors:");
+  rightControl->AddFrame(
+      colorTitle, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 2));
+
+  TGHorizontalFrame *colorFrame = new TGHorizontalFrame(rightControl, 200, 40);
+
+  TGVerticalFrame *histFrame = new TGVerticalFrame(colorFrame, 80, 40);
+  TGLabel *histColorLabel = new TGLabel(histFrame, "History O3");
+  histFrame->AddFrame(histColorLabel,
+                      new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  fHistoryColorSelect = new TGColorSelect(histFrame, kBlue, 300);
+  fHistoryColorSelect->Resize(60, 20);
+  fHistoryColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this,
+                               "OnHistoryColorSelected()");
+  histFrame->AddFrame(fHistoryColorSelect,
+                      new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  colorFrame->AddFrame(histFrame, new TGLayoutHints(kLHintsLeft, 5, 5, 2, 2));
+
+  TGVerticalFrame *teoFrame = new TGVerticalFrame(colorFrame, 80, 40);
+  TGLabel *teoColorLabel = new TGLabel(teoFrame, "O3 Teo");
+  teoFrame->AddFrame(teoColorLabel,
+                     new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  fTeoColorSelect = new TGColorSelect(teoFrame, kRed, 301);
+  fTeoColorSelect->Resize(60, 20);
+  fTeoColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this,
+                           "OnTeoColorSelected()");
+  teoFrame->AddFrame(fTeoColorSelect,
+                     new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  colorFrame->AddFrame(teoFrame, new TGLayoutHints(kLHintsLeft, 5, 5, 2, 2));
+
+  rightControl->AddFrame(
+      colorFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 2, 5));
+
   fLoadButton = new TGTextButton(rightControl, "&Load Graph", 200);
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
   rightControl->AddFrame(
@@ -141,8 +219,8 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   Resize(GetDefaultSize());
   MapWindow();
 
-  // Load the file
-  LoadFile();
+  // Scan for locations
+  ScanLocations();
 }
 
 O3ViewerGUI::~O3ViewerGUI() {
@@ -153,14 +231,102 @@ O3ViewerGUI::~O3ViewerGUI() {
   Cleanup();
 }
 
-void O3ViewerGUI::LoadFile() {
-  fRootFile = TFile::Open(fFileName.Data());
-  if (!fRootFile || fRootFile->IsZombie()) {
-    fStatusLabel->SetText("Error: Cannot open file!");
-    std::cerr << "Error: Cannot open file " << fFileName.Data() << std::endl;
+void O3ViewerGUI::ScanLocations() {
+  fLocationCombo->RemoveAll();
+
+  void *dirp = gSystem->OpenDirectory(fBaseDir.Data());
+  if (!dirp) {
+    fStatusLabel->SetText("Error: Cannot open base directory!");
     return;
   }
-  fStatusLabel->SetText("File loaded successfully");
+
+  const char *entry;
+  int locCount = 0;
+
+  while ((entry = gSystem->GetDirEntry(dirp))) {
+    TString dirName = entry;
+
+    if (dirName.Contains("skim") && !dirName.BeginsWith(".")) {
+      TString fullPath = Form("%s/%s", fBaseDir.Data(), dirName.Data());
+
+      if (gSystem->OpenDirectory(fullPath.Data())) {
+        TString locName = dirName;
+        locName.ReplaceAll("_skim", "");
+        locName.ReplaceAll("skim_", "");
+
+        TString rootFile =
+            Form("%s/%s_global.root", fullPath.Data(), locName.Data());
+        if (gSystem->AccessPathName(rootFile.Data()) == 0) {
+          fLocationCombo->AddEntry(locName.Data(), locCount++);
+        }
+      }
+    }
+  }
+
+  gSystem->FreeDirectory(dirp);
+
+  if (locCount > 0) {
+    fLocationCombo->Select(0);
+    fStatusLabel->SetText(Form("Found %d location(s)", locCount));
+    OnLocationSelected();
+  } else {
+    fStatusLabel->SetText("No locations found! Check directory structure.");
+  }
+}
+
+void O3ViewerGUI::OnLocationSelected() {
+  if (fRootFile && fRootFile->IsOpen()) {
+    fRootFile->Close();
+    delete fRootFile;
+    fRootFile = nullptr;
+  }
+
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+  canvas->Clear();
+  canvas->Modified();
+  canvas->Update();
+
+  LoadFile();
+}
+
+void O3ViewerGUI::LoadFile() {
+  TGTextLBEntry *locEntry = (TGTextLBEntry *)fLocationCombo->GetSelectedEntry();
+  if (!locEntry) {
+    fStatusLabel->SetText("Error: No location selected!");
+    return;
+  }
+
+  TString locName = locEntry->GetText()->GetString();
+
+  TString possiblePaths[] = {Form("%s/skim_%s/%s_global.root", fBaseDir.Data(),
+                                  locName.Data(), locName.Data()),
+                             Form("%s/%s_skim/%s_global.root", fBaseDir.Data(),
+                                  locName.Data(), locName.Data()),
+                             Form("%s/%s/%s_global.root", fBaseDir.Data(),
+                                  locName.Data(), locName.Data())};
+
+  TString fileName = "";
+  for (int i = 0; i < 3; i++) {
+    if (gSystem->AccessPathName(possiblePaths[i].Data()) == 0) {
+      fileName = possiblePaths[i];
+      break;
+    }
+  }
+
+  if (fileName == "") {
+    fStatusLabel->SetText(
+        Form("Error: Cannot find ROOT file for %s", locName.Data()));
+    return;
+  }
+
+  fRootFile = TFile::Open(fileName.Data());
+  if (!fRootFile || fRootFile->IsZombie()) {
+    fStatusLabel->SetText("Error: Cannot open file!");
+    std::cerr << "Error: Cannot open file " << fileName.Data() << std::endl;
+    return;
+  }
+
+  fStatusLabel->SetText(Form("Loaded: %s", locName.Data()));
   OnCategorySelected();
 }
 
@@ -194,18 +360,52 @@ void O3ViewerGUI::PopulateGraphs() {
     return;
 
   Int_t catId = fCategoryCombo->GetSelected();
-  Int_t yearId = fYearCombo->GetSelected();
 
   if (catId == 0) {
-    // Solar Calculus - individual graphs
     fGraphCombo->AddEntry("delta", 0);
     fGraphCombo->AddEntry("AST", 1);
     fGraphCombo->AddEntry("omega_s", 2);
     fGraphCombo->AddEntry("cos(z)", 3);
     fGraphCombo->AddEntry("(R0/R)^2", 4);
     fGraphCombo->AddEntry("G(Ise)", 5);
+  } else if (catId == 6) {
+    // Superposition mode - get unique graphs from both history and comp
+    // directories
+    TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+    if (!yearEntry)
+      return;
+
+    TString year = yearEntry->GetText()->GetString();
+    std::set<TString> graphNames; // Use set for uniqueness
+
+    // Scan history dir
+    TString historyPath = Form("%s/history", year.Data());
+    TDirectory *historyDir = (TDirectory *)fRootFile->Get(historyPath.Data());
+    if (historyDir) {
+      TIter nextHist(historyDir->GetListOfKeys());
+      TKey *histKey;
+      while ((histKey = (TKey *)nextHist())) {
+        graphNames.insert(histKey->GetName());
+      }
+    }
+
+    // Scan comp dir
+    TString compPath = Form("%s/comp", year.Data());
+    TDirectory *compDir = (TDirectory *)fRootFile->Get(compPath.Data());
+    if (compDir) {
+      TIter nextComp(compDir->GetListOfKeys());
+      TKey *compKey;
+      while ((compKey = (TKey *)nextComp())) {
+        graphNames.insert(compKey->GetName());
+      }
+    }
+
+    // Add unique graphs to combo
+    int entry = 0;
+    for (const auto &graphName : graphNames) {
+      fGraphCombo->AddEntry(graphName.Data(), entry++);
+    }
   } else if (catId >= 1 && catId <= 4) {
-    // Year-based categories
     TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
     if (!yearEntry)
       return;
@@ -240,7 +440,6 @@ void O3ViewerGUI::PopulateGraphs() {
       }
     }
   } else if (catId == 5) {
-    // All individual graphs
     TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
     if (!yearEntry)
       return;
@@ -278,18 +477,63 @@ void O3ViewerGUI::OnCategorySelected() {
   Int_t catId = fCategoryCombo->GetSelected();
 
   if (catId == 0) {
-    // Solar Calculus doesn't need year selection
     fYearCombo->SetEnabled(kFALSE);
+    fMultiYearCheck->SetEnabled(kFALSE);
+    fMultiYearCheck->SetOn(kFALSE);
     PopulateGraphs();
   } else {
     fYearCombo->SetEnabled(kTRUE);
+    fMultiYearCheck->SetEnabled(kTRUE);
     PopulateYears();
   }
 }
 
 void O3ViewerGUI::OnYearSelected() { PopulateGraphs(); }
 
-void O3ViewerGUI::LoadGraph() {
+void O3ViewerGUI::OnMultiYearToggled() {
+  if (fMultiYearCheck->IsOn()) {
+    fYearCombo->SetEnabled(kFALSE);
+  } else {
+    fYearCombo->SetEnabled(kTRUE);
+  }
+}
+
+void O3ViewerGUI::OnHistoryColorSelected() {
+  Pixel_t pixel = fHistoryColorSelect->GetColor();
+  fHistoryColor = TColor::GetColor(pixel);
+}
+
+void O3ViewerGUI::OnTeoColorSelected() {
+  Pixel_t pixel = fTeoColorSelect->GetColor();
+  fTeoColor = TColor::GetColor(pixel);
+}
+
+void O3ViewerGUI::DrawObject(TObject *obj, const char *path) {
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+  canvas->cd();
+  canvas->SetGrid();
+
+  if (obj->InheritsFrom("TGraph")) {
+    TGraph *gr = (TGraph *)obj;
+    TGraph *grClone = (TGraph *)gr->Clone();
+    grClone->Draw("AP");
+  } else if (obj->InheritsFrom("TH1")) {
+    TH1 *h = (TH1 *)obj;
+    TH1 *hClone = (TH1 *)h->Clone();
+    hClone->Draw("hist");
+  } else if (obj->InheritsFrom("TCanvas")) {
+    TCanvas *storedCanvas = (TCanvas *)obj;
+    storedCanvas->DrawClonePad();
+  } else {
+    fStatusLabel->SetText(Form("Error: Unsupported object type at %s", path));
+    return;
+  }
+
+  canvas->Modified();
+  canvas->Update();
+}
+
+void O3ViewerGUI::LoadSuperposition() {
   if (!fRootFile || fRootFile->IsZombie()) {
     fStatusLabel->SetText("Error: File not loaded!");
     return;
@@ -298,136 +542,528 @@ void O3ViewerGUI::LoadGraph() {
   TCanvas *canvas = fEmbCanvas->GetCanvas();
   canvas->Clear();
   canvas->cd();
+  canvas->SetGrid();
 
-  Int_t catId = fCategoryCombo->GetSelected();
+  TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+  TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
 
-  if (catId == 0) {
-    // Load from ana directory for Solar Calculus
-    TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
-    if (!anaDir) {
-      fStatusLabel->SetText("Error: ana directory not found!");
-      return;
+  if (!yearEntry || !graphEntry) {
+    fStatusLabel->SetText("Error: Please select year and graph!");
+    canvas->Modified();
+    canvas->Update();
+    return;
+  }
+
+  TString year = yearEntry->GetText()->GetString();
+  TString graphName = graphEntry->GetText()->GetString();
+
+  // Load from History O3
+  TString historyPath = Form("%s/history/%s", year.Data(), graphName.Data());
+  TObject *historyObj = fRootFile->Get(historyPath.Data());
+
+  // Load from O3 Teo Study
+  TString teoPath = Form("%s/comp/%s", year.Data(), graphName.Data());
+  TObject *teoObj = fRootFile->Get(teoPath.Data());
+
+  bool drawnFirst = false;
+  bool historyDrawn = false;
+  bool teoDrawn = false;
+
+  // Draw History O3 first (in selected color) - only if it has points
+  if (historyObj && historyObj->InheritsFrom("TGraph")) {
+    TGraph *grHistory = (TGraph *)historyObj->Clone("gr_history");
+    if (grHistory->GetN() > 0) {
+      grHistory->SetLineColor(fHistoryColor);
+      grHistory->SetMarkerColor(fHistoryColor);
+      grHistory->SetMarkerStyle(20);
+      grHistory->SetMarkerSize(0.8);
+      grHistory->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+      grHistory->Draw("APL");
+      drawnFirst = true;
+      historyDrawn = true;
+    } else {
+      delete grHistory; // Clean up empty clone
+      std::cout << "Warning: Empty History O3 graph for " << graphName.Data()
+                << " in year " << year.Data() << std::endl;
+    }
+  } else if (historyObj && historyObj->InheritsFrom("TH1")) {
+    // Handle TH1 similarly if needed, but assuming TGraph for superposition
+    TH1 *hHistory = (TH1 *)historyObj->Clone("h_history");
+    if (hHistory->GetEntries() > 0) {
+      hHistory->SetLineColor(fHistoryColor);
+      hHistory->SetLineWidth(2);
+      hHistory->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+      hHistory->Draw("hist");
+      drawnFirst = true;
+      historyDrawn = true;
+    } else {
+      delete hHistory;
+      std::cout << "Warning: Empty History O3 histogram for "
+                << graphName.Data() << " in year " << year.Data() << std::endl;
+    }
+  }
+
+  // Draw O3 Teo Study (in selected color) - only if it has points
+  if (teoObj && teoObj->InheritsFrom("TGraph")) {
+    TGraph *grTeo = (TGraph *)teoObj->Clone("gr_teo");
+    if (grTeo->GetN() > 0) {
+      grTeo->SetLineColor(fTeoColor);
+      grTeo->SetMarkerColor(fTeoColor);
+      grTeo->SetMarkerStyle(21);
+      grTeo->SetMarkerSize(0.8);
+      if (drawnFirst) {
+        grTeo->Draw("PL SAME");
+      } else {
+        grTeo->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+        grTeo->Draw("APL");
+        drawnFirst = true;
+      }
+      teoDrawn = true;
+    } else {
+      delete grTeo; // Clean up empty clone
+      std::cout << "Warning: Empty O3 Teo graph for " << graphName.Data()
+                << " in year " << year.Data() << std::endl;
+    }
+  } else if (teoObj && teoObj->InheritsFrom("TH1")) {
+    TH1 *hTeo = (TH1 *)teoObj->Clone("h_teo");
+    if (hTeo->GetEntries() > 0) {
+      hTeo->SetLineColor(fTeoColor);
+      hTeo->SetLineWidth(2);
+      hTeo->SetLineStyle(2);
+      if (drawnFirst) {
+        hTeo->Draw("hist SAME");
+      } else {
+        hTeo->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
+        hTeo->Draw("hist");
+        drawnFirst = true;
+      }
+      teoDrawn = true;
+    } else {
+      delete hTeo;
+      std::cout << "Warning: Empty O3 Teo histogram for " << graphName.Data()
+                << " in year " << year.Data() << std::endl;
+    }
+  }
+
+  // Add legend only for drawn components
+  if (drawnFirst) {
+    TLegend *legend = new TLegend(0.7, 0.75, 0.9, 0.9);
+    legend->SetBorderSize(1);
+    legend->SetFillColor(0);
+
+    if (historyDrawn) {
+      if (historyObj->InheritsFrom("TGraph")) {
+        legend->AddEntry("gr_history", "History O3", "lp");
+      } else if (historyObj->InheritsFrom("TH1")) {
+        legend->AddEntry("h_history", "History O3", "l");
+      }
     }
 
-    TCanvas *storedCanvas = (TCanvas *)anaDir->Get("Solar Calculus");
-    if (storedCanvas) {
-      storedCanvas->DrawClonePad();
-      fStatusLabel->SetText("Loaded: Solar Calculus");
-    } else {
-      // Load individual graph
-      TGTextLBEntry *entry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
-      if (!entry)
-        return;
+    if (teoDrawn) {
+      if (teoObj->InheritsFrom("TGraph")) {
+        legend->AddEntry("gr_teo", "O3 Teo Study", "lp");
+      } else if (teoObj->InheritsFrom("TH1")) {
+        legend->AddEntry("h_teo", "O3 Teo Study", "l");
+      }
+    }
 
-      TString graphNames[] = {"grdh",  "grAST",  "grws",
-                              "grczh", "grRoR2", "grGIse"};
-      Int_t graphId = fGraphCombo->GetSelected();
+    legend->Draw();
+  } else {
+    // Nothing drawn - show a message on canvas
+    TLatex *text = new TLatex(0.5, 0.5,
+                              Form("No data available for %s (Year %s)",
+                                   graphName.Data(), year.Data()));
+    text->SetTextAlign(22);
+    text->SetTextSize(0.05);
+    text->SetTextColor(kRed);
+    text->Draw();
+  }
 
-      if (graphId >= 0 && graphId < 6) {
-        TGraph *gr = (TGraph *)anaDir->Get(graphNames[graphId].Data());
-        if (gr) {
-          gr->Draw("A*");
-          canvas->SetGrid();
-          fStatusLabel->SetText(Form("Loaded: %s", graphNames[graphId].Data()));
+  canvas->Modified();
+  canvas->Update();
+
+  // Update status based on what was drawn
+  if (historyDrawn && teoDrawn) {
+    fStatusLabel->SetText(Form(
+        "Superposition: History O3 + O3 Teo Study (Year %s)", year.Data()));
+  } else if (historyDrawn) {
+    fStatusLabel->SetText(
+        Form("Superposition: Only History O3 (Year %s)", year.Data()));
+  } else if (teoDrawn) {
+    fStatusLabel->SetText(
+        Form("Superposition: Only O3 Teo Study (Year %s)", year.Data()));
+  } else {
+    fStatusLabel->SetText(
+        Form("No valid data for superposition (Year %s)", year.Data()));
+  }
+}
+
+void O3ViewerGUI::LoadMultiYearPanel() {
+  if (!fRootFile || fRootFile->IsZombie()) {
+    fStatusLabel->SetText("Error: File not loaded!");
+    return;
+  }
+
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+  canvas->Clear();
+
+  Int_t catId = fCategoryCombo->GetSelected();
+  TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+
+  if (!graphEntry) {
+    fStatusLabel->SetText("Error: No graph selected!");
+    canvas->Modified();
+    canvas->Update();
+    return;
+  }
+
+  // Collect all years
+  std::vector<TString> years;
+  TIter next(fRootFile->GetListOfKeys());
+  TKey *key;
+
+  while ((key = (TKey *)next())) {
+    TString name = key->GetName();
+    if (name.IsDigit()) {
+      years.push_back(name);
+    }
+  }
+
+  if (years.size() == 0) {
+    fStatusLabel->SetText("Error: No years found!");
+    canvas->Modified();
+    canvas->Update();
+    return;
+  }
+
+  // Calculate grid layout
+  Int_t nYears = years.size();
+  Int_t nCols = (Int_t)TMath::Ceil(TMath::Sqrt(nYears));
+  Int_t nRows = (Int_t)TMath::Ceil((Double_t)nYears / nCols);
+
+  canvas->Clear();
+  canvas->Divide(nCols, nRows);
+
+  TString graphName = graphEntry->GetText()->GetString();
+  TString subdir;
+
+  if (catId == 6) {
+    // Superposition mode - load both history and comp
+    for (Int_t i = 0; i < nYears; i++) {
+      canvas->cd(i + 1);
+      gPad->SetGrid();
+
+      TString historyPath =
+          Form("%s/history/%s", years[i].Data(), graphName.Data());
+      TString teoPath = Form("%s/comp/%s", years[i].Data(), graphName.Data());
+
+      TObject *historyObj = fRootFile->Get(historyPath.Data());
+      TObject *teoObj = fRootFile->Get(teoPath.Data());
+
+      bool drawnFirst = false;
+      bool anythingDrawn = false;
+
+      // Draw history - only if it has points
+      if (historyObj && historyObj->InheritsFrom("TGraph")) {
+        TGraph *gr =
+            (TGraph *)historyObj->Clone(Form("gr_hist_%s", years[i].Data()));
+        if (gr->GetN() > 0) {
+          gr->SetTitle(Form("%s", years[i].Data()));
+          gr->SetLineColor(fHistoryColor);
+          gr->SetMarkerColor(fHistoryColor);
+          gr->SetMarkerStyle(20);
+          gr->SetMarkerSize(0.6);
+          gr->Draw("APL");
+          drawnFirst = true;
+          anythingDrawn = true;
+        } else {
+          delete gr;
+        }
+      }
+
+      // Draw teo - only if it has points
+      if (teoObj && teoObj->InheritsFrom("TGraph")) {
+        TGraph *gr =
+            (TGraph *)teoObj->Clone(Form("gr_teo_%s", years[i].Data()));
+        if (gr->GetN() > 0) {
+          gr->SetLineColor(fTeoColor);
+          gr->SetMarkerColor(fTeoColor);
+          gr->SetMarkerStyle(21);
+          gr->SetMarkerSize(0.6);
+          if (drawnFirst) {
+            gr->Draw("PL SAME");
+          } else {
+            gr->SetTitle(Form("%s", years[i].Data()));
+            gr->Draw("APL");
+          }
+          anythingDrawn = true;
+        } else {
+          delete gr;
+        }
+      }
+
+      if (!anythingDrawn) {
+        if (!historyObj && !teoObj) {
+          TLatex *text =
+              new TLatex(0.5, 0.5, Form("%s\nNot Found", years[i].Data()));
+          text->SetTextAlign(22);
+          text->SetTextSize(0.06);
+          text->SetTextColor(kRed);
+          text->Draw();
+        } else {
+          TLatex *text =
+              new TLatex(0.5, 0.5, Form("%s\nEmpty Graph(s)", years[i].Data()));
+          text->SetTextAlign(22);
+          text->SetTextSize(0.06);
+          text->SetTextColor(kOrange);
+          text->Draw();
         }
       }
     }
-  } else if (catId >= 1 && catId <= 4) {
-    // Load canvas or individual graph
+  } else {
+    // Normal mode
+    switch (catId) {
+    case 1:
+      subdir = "fm";
+      break;
+    case 2:
+      subdir = "history";
+      break;
+    case 3:
+      subdir = "comp";
+      break;
+    case 4:
+      subdir = "error";
+      break;
+    case 5:
+      if (graphName.Contains("/")) {
+        subdir = graphName(0, graphName.First('/'));
+        graphName = graphName(graphName.First('/') + 1, graphName.Length());
+      }
+      break;
+    }
+
+    for (Int_t i = 0; i < nYears; i++) {
+      canvas->cd(i + 1);
+      gPad->SetGrid();
+
+      TString path;
+      if (catId >= 1 && catId <= 4) {
+        path =
+            Form("%s/%s/%s", years[i].Data(), subdir.Data(), graphName.Data());
+      } else if (catId == 5) {
+        path =
+            Form("%s/%s/%s", years[i].Data(), subdir.Data(), graphName.Data());
+      }
+
+      TObject *obj = fRootFile->Get(path.Data());
+
+      if (obj) {
+        if (obj->InheritsFrom("TGraph")) {
+          TGraph *gr = (TGraph *)obj->Clone(Form("gr_%s", years[i].Data()));
+          gr->SetTitle(Form("%s - %s", years[i].Data(), graphName.Data()));
+          gr->Draw("AP");
+        } else if (obj->InheritsFrom("TH1")) {
+          TH1 *h = (TH1 *)obj->Clone(Form("h_%s", years[i].Data()));
+          h->SetTitle(Form("%s - %s", years[i].Data(), graphName.Data()));
+          h->Draw("hist");
+        }
+      } else {
+        TLatex *text =
+            new TLatex(0.5, 0.5, Form("%s\nNot Found", years[i].Data()));
+        text->SetTextAlign(22);
+        text->SetTextSize(0.06);
+        text->Draw();
+      }
+    }
+  }
+
+  canvas->Modified();
+  canvas->Update();
+  fStatusLabel->SetText(Form("Loaded multi-year panel: %d years", nYears));
+}
+
+void O3ViewerGUI::LoadGraph() {
+  if (!fRootFile || fRootFile->IsZombie()) {
+    fStatusLabel->SetText("Error: File not loaded!");
+    return;
+  }
+
+  Int_t catId = fCategoryCombo->GetSelected();
+
+  // Check if superposition mode is selected
+  if (catId == 6) {
+    if (fMultiYearCheck->IsOn()) {
+      LoadMultiYearPanel();
+    } else {
+      LoadSuperposition();
+    }
+    return;
+  }
+
+  // Check if multi-year mode is enabled
+  if (fMultiYearCheck->IsOn() && catId != 0) {
+    LoadMultiYearPanel();
+    return;
+  }
+
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+  canvas->Clear();
+  canvas->cd();
+
+  if (catId == 0) {
     TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
-    TString canvasNames[] = {"", "Form Factor f(m)", "history o3",
-                             "o3teo study", "o3teo error"};
+    if (!anaDir) {
+      fStatusLabel->SetText("Error: ana directory not found!");
+      canvas->Modified();
+      canvas->Update();
+      return;
+    }
+
+    TGTextLBEntry *entry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+    if (!entry) {
+      fStatusLabel->SetText("Error: No graph selected!");
+      canvas->Modified();
+      canvas->Update();
+      return;
+    }
+
+    TString graphNames[] = {"grdh",  "grAST",  "grws",
+                            "grczh", "grRoR2", "grGIse"};
+    Int_t graphId = fGraphCombo->GetSelected();
+
+    if (graphId >= 0 && graphId < 6) {
+      TGraph *gr = (TGraph *)anaDir->Get(graphNames[graphId].Data());
+      if (gr) {
+        TGraph *grClone = (TGraph *)gr->Clone();
+        grClone->Draw("A*");
+        canvas->SetGrid();
+        canvas->Modified();
+        canvas->Update();
+        fStatusLabel->SetText(Form("Loaded: %s", graphNames[graphId].Data()));
+      } else {
+        fStatusLabel->SetText(
+            Form("Error: Graph %s not found!", graphNames[graphId].Data()));
+        canvas->Modified();
+        canvas->Update();
+      }
+    }
+  } else if (catId >= 1 && catId <= 4) {
+    TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
+    if (!anaDir) {
+      fStatusLabel->SetText("Error: ana directory not found!");
+      canvas->Modified();
+      canvas->Update();
+      return;
+    }
+
+    TString canvasNames[] = {"", "Form Factor", "History O3", "O3 Teo Study",
+                             "O3 Teo Error"};
 
     TCanvas *storedCanvas = (TCanvas *)anaDir->Get(canvasNames[catId].Data());
     if (storedCanvas) {
+      canvas->cd();
       storedCanvas->DrawClonePad();
+      canvas->Modified();
+      canvas->Update();
       fStatusLabel->SetText(Form("Loaded: %s", canvasNames[catId].Data()));
-    } else {
-      // Load individual graph from year directory
-      TGTextLBEntry *yearEntry =
-          (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
-      TGTextLBEntry *graphEntry =
-          (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
-
-      if (!yearEntry || !graphEntry)
-        return;
-
-      TString year = yearEntry->GetText()->GetString();
-      TString graphName = graphEntry->GetText()->GetString();
-      TString subdir;
-
-      switch (catId) {
-      case 1:
-        subdir = "fm";
-        break;
-      case 2:
-        subdir = "history";
-        break;
-      case 3:
-        subdir = "comp";
-        break;
-      case 4:
-        subdir = "error";
-        break;
-      }
-
-      TString path =
-          Form("%s/%s/%s", year.Data(), subdir.Data(), graphName.Data());
-      TObject *obj = fRootFile->Get(path.Data());
-
-      if (obj && obj->InheritsFrom("TGraph")) {
-        TGraph *gr = (TGraph *)obj;
-        gr->Draw("AP");
-        canvas->SetGrid();
-        fStatusLabel->SetText(Form("Loaded: %s", path.Data()));
-      }
+      return;
     }
-  } else if (catId == 5) {
-    // Individual graphs
+
     TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
     TGTextLBEntry *graphEntry =
         (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
 
-    if (!yearEntry || !graphEntry)
+    if (!yearEntry || !graphEntry) {
+      fStatusLabel->SetText("Error: Please select year and graph!");
+      canvas->Modified();
+      canvas->Update();
       return;
+    }
+
+    TString year = yearEntry->GetText()->GetString();
+    TString graphName = graphEntry->GetText()->GetString();
+    TString subdir;
+
+    switch (catId) {
+    case 1:
+      subdir = "fm";
+      break;
+    case 2:
+      subdir = "history";
+      break;
+    case 3:
+      subdir = "comp";
+      break;
+    case 4:
+      subdir = "error";
+      break;
+    }
+
+    TString path =
+        Form("%s/%s/%s", year.Data(), subdir.Data(), graphName.Data());
+    TObject *obj = fRootFile->Get(path.Data());
+
+    if (obj) {
+      DrawObject(obj, path.Data());
+      fStatusLabel->SetText(Form("Fallback loaded: %s", path.Data()));
+    } else {
+      fStatusLabel->SetText(Form("Error: Object not found at %s", path.Data()));
+      canvas->Modified();
+      canvas->Update();
+    }
+  } else if (catId == 5) {
+    TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+    TGTextLBEntry *graphEntry =
+        (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+
+    if (!yearEntry || !graphEntry) {
+      fStatusLabel->SetText("Error: Please select year and graph!");
+      canvas->Modified();
+      canvas->Update();
+      return;
+    }
 
     TString year = yearEntry->GetText()->GetString();
     TString graphPath = graphEntry->GetText()->GetString();
     TString fullPath = Form("%s/%s", year.Data(), graphPath.Data());
 
     TObject *obj = fRootFile->Get(fullPath.Data());
-    if (obj && obj->InheritsFrom("TGraph")) {
-      TGraph *gr = (TGraph *)obj;
-      gr->Draw("AP");
-      canvas->SetGrid();
+    if (obj) {
+      DrawObject(obj, fullPath.Data());
       fStatusLabel->SetText(Form("Loaded: %s", fullPath.Data()));
+    } else {
+      fStatusLabel->SetText(
+          Form("Error: Object not found at %s", fullPath.Data()));
+      canvas->Modified();
+      canvas->Update();
     }
   }
-
-  canvas->Modified();
-  canvas->Update();
 }
 
 void O3ViewerGUI::CloseWindow() { gApplication->Terminate(0); }
 
 // Main function
-void viewO3Global(const char *filename = "skim_*/location_global.root") {
-  TApplication theApp("App", 0, 0);
-  new O3ViewerGUI(gClient->GetRoot(), 1200, 800, filename);
-  theApp.Run();
+void viewO3Global(const char *basedir = ".") {
+  if (!gApplication) {
+    TApplication *theApp = new TApplication("App", 0, 0);
+    new O3ViewerGUI(gClient->GetRoot(), 1200, 800, basedir);
+    theApp->Run();
+  } else {
+    new O3ViewerGUI(gClient->GetRoot(), 1200, 800, basedir);
+  }
 }
 
-// If compiling as standalone
 #ifndef __CINT__
 int main(int argc, char **argv) {
   TApplication theApp("App", &argc, argv);
 
-  const char *filename = "global.root";
+  const char *basedir = ".";
   if (argc > 1) {
-    filename = argv[1];
+    basedir = argv[1];
   }
 
-  new O3ViewerGUI(gClient->GetRoot(), 1200, 800, filename);
+  new O3ViewerGUI(gClient->GetRoot(), 1200, 800, basedir);
   theApp.Run();
   return 0;
 }
