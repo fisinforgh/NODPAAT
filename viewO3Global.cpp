@@ -41,7 +41,9 @@ private:
   TGraph *fGrHistory;                  // Stored clone for redraw
   TGraph *fGrTeo;                      // Stored clone for redraw (for overlay)
   bool fConnectHistory;                // Toggle state
-
+  TGCheckButton *fConnectTeoCheck;     // New checkbox for Teo lines
+  bool fConnectTeo;                    // Toggle state for Teo lines
+  //
 public:
   O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h, const char *basedir = ".");
   virtual ~O3ViewerGUI();
@@ -62,6 +64,7 @@ public:
   void OnTeoColorSelected();
   void CloseWindow();
   void OnConnectHistoryToggled();
+  void OnConnectTeoToggled();
 
   ClassDef(O3ViewerGUI, 0)
 };
@@ -75,6 +78,8 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fGrHistory = nullptr;
   fGrTeo = nullptr;
   fConnectHistory = true;
+  fConnectTeoCheck = nullptr;
+  fConnectTeo = true;
 
   SetWindowName("O3 Global Analysis Viewer");
   SetCleanup(kDeepCleanup);
@@ -202,6 +207,13 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
                                 "OnConnectHistoryToggled()");
   rightControl->AddFrame(
       fConnectHistoryCheck,
+      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  fConnectTeoCheck = new TGCheckButton(rightControl, "Connect Teo Lines");
+  fConnectTeoCheck->SetOn(kTRUE); // Default: connected
+  fConnectTeoCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
+                            "OnConnectTeoToggled()");
+  rightControl->AddFrame(
+      fConnectTeoCheck,
       new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
   fLoadButton = new TGTextButton(rightControl, "&Load Graph", 200);
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
@@ -502,6 +514,7 @@ void O3ViewerGUI::PopulateGraphs() {
 
 void O3ViewerGUI::OnConnectHistoryToggled() {
   fConnectHistory = fConnectHistoryCheck->IsOn();
+
   if (fGrHistory && fGrTeo) { // Only if in superposition and graphs exist
     Int_t catId = fCategoryCombo->GetSelected();
     if (catId == 6) { // Superposition mode
@@ -512,6 +525,7 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
 
       bool drawnFirst = false;
       TString drawOptHistory = fConnectHistory ? "APL" : "AP";
+      TString drawOptTeo = fConnectTeo ? "PL" : "P";
 
       // Redraw History
       if (fGrHistory->GetN() > 0) {
@@ -522,13 +536,13 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
       // Redraw Teo on top
       if (fGrTeo->GetN() > 0) {
         if (drawnFirst) {
-          fGrTeo->Draw("PL SAME");
+          fGrTeo->Draw(Form("%s SAME", drawOptTeo.Data()));
         } else {
-          fGrTeo->Draw("PL");
+          fGrTeo->Draw(drawOptTeo.Data());
         }
       }
 
-      // Legend (same as before)
+      // Legend
       TLegend *legend = new TLegend(0.7, 0.75, 0.9, 0.9);
       legend->SetBorderSize(1);
       legend->SetFillColor(0);
@@ -538,6 +552,66 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
 
       canvas->Modified();
       canvas->Update();
+    }
+  }
+  // If in multi-year mode, reload the panel
+  if (fMultiYearCheck->IsOn()) {
+    Int_t catId = fCategoryCombo->GetSelected();
+    if (catId == 6 || catId == 2) {
+      LoadMultiYearPanel();
+    }
+  }
+}
+
+void O3ViewerGUI::OnConnectTeoToggled() {
+  fConnectTeo = fConnectTeoCheck->IsOn();
+
+  // If in superposition mode with both graphs
+  if (fGrHistory && fGrTeo) {
+    Int_t catId = fCategoryCombo->GetSelected();
+    if (catId == 6) { // Superposition mode
+      TCanvas *canvas = fEmbCanvas->GetCanvas();
+      canvas->Clear();
+      canvas->cd();
+      canvas->SetGrid();
+
+      bool drawnFirst = false;
+      TString drawOptHistory = fConnectHistory ? "APL" : "AP";
+      TString drawOptTeo = fConnectTeo ? "PL" : "P";
+
+      // Redraw History
+      if (fGrHistory->GetN() > 0) {
+        fGrHistory->Draw(drawOptHistory.Data());
+        drawnFirst = true;
+      }
+
+      // Redraw Teo on top
+      if (fGrTeo->GetN() > 0) {
+        if (drawnFirst) {
+          fGrTeo->Draw(Form("%s SAME", drawOptTeo.Data()));
+        } else {
+          fGrTeo->Draw(drawOptTeo.Data());
+        }
+      }
+
+      // Legend
+      TLegend *legend = new TLegend(0.7, 0.75, 0.9, 0.9);
+      legend->SetBorderSize(1);
+      legend->SetFillColor(0);
+      legend->AddEntry(fGrHistory, "History O3", "lp");
+      legend->AddEntry(fGrTeo, "O3 Teo Study", "lp");
+      legend->Draw();
+
+      canvas->Modified();
+      canvas->Update();
+    }
+  }
+
+  // If in multi-year mode, reload the panel
+  if (fMultiYearCheck->IsOn()) {
+    Int_t catId = fCategoryCombo->GetSelected();
+    if (catId == 6 || catId == 2 || catId == 3) {
+      LoadMultiYearPanel();
     }
   }
 }
@@ -848,13 +922,14 @@ void O3ViewerGUI::LoadMultiYearPanel() {
       if (historyObj && historyObj->InheritsFrom("TGraph")) {
         TGraph *gr =
             (TGraph *)historyObj->Clone(Form("gr_hist_%s", years[i].Data()));
+        TString drawOptHistory = fConnectHistory ? "APL" : "AP";
         if (gr->GetN() > 0) {
           gr->SetTitle(Form("%s", years[i].Data()));
           gr->SetLineColor(fHistoryColor);
           gr->SetMarkerColor(fHistoryColor);
           gr->SetMarkerStyle(20);
           gr->SetMarkerSize(0.6);
-          gr->Draw("APL");
+          gr->Draw(drawOptHistory.Data());
           drawnFirst = true;
           anythingDrawn = true;
         } else {
@@ -866,16 +941,17 @@ void O3ViewerGUI::LoadMultiYearPanel() {
       if (teoObj && teoObj->InheritsFrom("TGraph")) {
         TGraph *gr =
             (TGraph *)teoObj->Clone(Form("gr_teo_%s", years[i].Data()));
+        TString drawOptTeo = fConnectTeo ? "PL" : "P";
         if (gr->GetN() > 0) {
           gr->SetLineColor(fTeoColor);
           gr->SetMarkerColor(fTeoColor);
           gr->SetMarkerStyle(21);
           gr->SetMarkerSize(0.6);
           if (drawnFirst) {
-            gr->Draw("PL SAME");
+            gr->Draw(Form("%s SAME", drawOptTeo.Data()));
           } else {
             gr->SetTitle(Form("%s", years[i].Data()));
-            gr->Draw("APL");
+            gr->Draw(Form("A%s", drawOptTeo.Data()));
           }
           anythingDrawn = true;
         } else {
