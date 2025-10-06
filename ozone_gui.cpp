@@ -1,3 +1,4 @@
+#include "viewO3Global.cpp" // <--- Add this line
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TFile.h>
@@ -130,6 +131,24 @@ public:
     TGCompositeFrame *macroTab = fMainTabs->AddTab("Macro Runner");
     CreateMacroInterface(macroTab);
 
+    // ============================================================================
+    // View O3 Global Tab Integration
+    // ============================================================================
+    {
+      TGCompositeFrame *tabViewO3 = fMainTabs->AddTab("View O3 Global");
+
+      TGHorizontalFrame *viewO3Frame =
+          new TGHorizontalFrame(tabViewO3, 800, 600);
+      tabViewO3->AddFrame(viewO3Frame,
+                          new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
+      TGMainFrame *viewO3GlobalWin = CreateViewO3GlobalGUI(viewO3Frame);
+      viewO3Frame->AddFrame(viewO3GlobalWin,
+                            new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
+      viewO3GlobalWin->MapSubwindows();
+      viewO3GlobalWin->MapWindow();
+    }
     AddFrame(fMainTabs,
              new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
 

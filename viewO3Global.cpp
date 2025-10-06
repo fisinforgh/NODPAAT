@@ -1511,16 +1511,16 @@ void viewO3Global(const char *basedir = ".") {
 }
 
 #ifndef __CINT__
-int main(int argc, char **argv) {
-  TApplication theApp("App", &argc, argv);
 
-  const char *basedir = ".";
-  if (argc > 1) {
-    basedir = argv[1];
-  }
+// ============================================================================
+// Embeddable version for ozone_gui.cpp
+// ============================================================================
+TGMainFrame *CreateViewO3GlobalGUI(TGCompositeFrame *parent) {
+  // Create instance of your existing O3ViewerGUI class
+  TGMainFrame *mainFrame = new O3ViewerGUI(parent, 800, 600);
 
-  new O3ViewerGUI(gClient->GetRoot(), 1200, 800, basedir);
-  theApp.Run();
-  return 0;
+  mainFrame->SetCleanup(kDeepCleanup);
+  mainFrame->MapSubwindows();
+  return mainFrame;
 }
 #endif
