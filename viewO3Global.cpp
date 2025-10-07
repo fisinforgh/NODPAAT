@@ -118,7 +118,7 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   catFrame->AddFrame(
       catLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
   fCategoryCombo = new TGComboBox(catFrame, 100);
-  fCategoryCombo->AddEntry("Solar Calculus", 0);
+  fCategoryCombo->AddEntry("Analysis graphs", 0);
   fCategoryCombo->AddEntry("Form Factor", 1);
   fCategoryCombo->AddEntry("History O3", 2);
   fCategoryCombo->AddEntry("O3 Teo Study", 3);
@@ -424,6 +424,11 @@ void O3ViewerGUI::PopulateGraphs() {
     fGraphCombo->AddEntry("cos(z)", 3);
     fGraphCombo->AddEntry("(R0/R)^2", 4);
     fGraphCombo->AddEntry("G(Ise)", 5);
+    fGraphCombo->AddEntry("Solar Calculus", 6);
+    fGraphCombo->AddEntry("Form Factor f(m)", 7);
+    fGraphCombo->AddEntry("history o3", 8);
+    fGraphCombo->AddEntry("o3teo study", 9);
+    fGraphCombo->AddEntry("o3teo error", 10);
   } else if (catId == 6) {
     // Superposition mode - get unique graphs from both history and comp
     // directories
@@ -1102,22 +1107,64 @@ void O3ViewerGUI::LoadGraph() {
       return;
     }
 
-    TString graphNames[] = {"grdh",  "grAST",  "grws",
-                            "grczh", "grRoR2", "grGIse"};
-    Int_t graphId = fGraphCombo->GetSelected();
+    TString sel = entry->GetText()->GetString();
 
-    if (graphId >= 0 && graphId < 6) {
-      TGraph *gr = (TGraph *)anaDir->Get(graphNames[graphId].Data());
-      if (gr) {
-        TGraph *grClone = (TGraph *)gr->Clone();
-        grClone->Draw("A*");
-        canvas->SetGrid();
+    // 1) If the user selected a saved TCanvas in ana, draw it directly.
+    if (sel == "Solar Calculus" || sel == "Form Factor f(m)" ||
+        sel == "history o3" || sel == "o3teo study" || sel == "o3teo error") {
+      TCanvas *storedCanvas = (TCanvas *)anaDir->Get(sel.Data());
+      if (storedCanvas) {
+        canvas->cd();
+        storedCanvas->DrawClonePad();
         canvas->Modified();
         canvas->Update();
-        fStatusLabel->SetText(Form("Loaded: %s", graphNames[graphId].Data()));
+        fStatusLabel->SetText(Form("Loaded canvas: %s", sel.Data()));
       } else {
         fStatusLabel->SetText(
-            Form("Error: Graph %s not found!", graphNames[graphId].Data()));
+            Form("Error: Canvas '%s' not found in ana", sel.Data()));
+        canvas->Modified();
+        canvas->Update();
+      }
+    } else {
+      // 2) Otherwise treat selection as one of the individual Graphs saved as
+      // Graph;N Map known labels to the Graph cycle index (Graph;1..Graph;6)
+      Int_t cycle = -1;
+      if (sel == "delta") {
+        cycle = 1;
+      } else if (sel == "AST") {
+        cycle = 2;
+      } else if (sel == "omega_s") {
+        cycle = 3;
+      } else if (sel == "cos(z)") {
+        cycle = 4;
+      } else if (sel == "(R0/R)^2") {
+        cycle = 5;
+      } else if (sel == "G(Ise)") {
+        cycle = 6;
+      }
+
+      if (cycle > 0) {
+        // Graph;N are stored under ana. Use the full path so Get() finds it.
+        TString graphPath = Form("ana/Graph;%d", cycle);
+        TGraph *gr = (TGraph *)fRootFile->Get(graphPath.Data());
+        if (gr) {
+          TGraph *grClone = (TGraph *)gr->Clone();
+          canvas->cd();
+          grClone->Draw("A*");
+          canvas->SetGrid();
+          canvas->Modified();
+          canvas->Update();
+          fStatusLabel->SetText(
+              Form("Loaded: %s (Graph;%d)", sel.Data(), cycle));
+        } else {
+          fStatusLabel->SetText(
+              Form("Error: Graph not found at %s", graphPath.Data()));
+          canvas->Modified();
+          canvas->Update();
+        }
+      } else {
+        fStatusLabel->SetText(
+            Form("Error: Unknown selection '%s'", sel.Data()));
         canvas->Modified();
         canvas->Update();
       }
