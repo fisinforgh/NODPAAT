@@ -1,18 +1,18 @@
+#include <cmath>
+#include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <math.h>
-#include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string>
 #include <unistd.h> // for getpid()
 
+namespace fs = std::filesystem;
 using namespace std;
 
-const float XMin = -179.375;
-const float step = 1.25;
-const int bpLine = 25; // bins per line
+constexpr float XMin = -179.375f;
+constexpr float step = 1.25f;
+constexpr int bpLine = 25; // bins per line
 
 void usage() {
   cout << "-A<latitude> -B<longitude> -P<prefix i.e BOG> -D</path/to/data> "
@@ -24,11 +24,11 @@ void usage() {
   exit(8);
 }
 
-float lat;
-float lon;
-char *prefix = "";
-char *pathtodata = "";
-int opt;
+float lat{};
+float lon{};
+string prefix{};
+string pathtodata{};
+int opt{};
 
 int main(int argc, char *argv[]) {
 
@@ -41,29 +41,29 @@ int main(int argc, char *argv[]) {
 
       // latitude
     case 'A':
-      lat = atof(&argv[1][2]);
+      lat = strtof(&argv[1][2], nullptr);
       break;
 
       // longitude
     case 'B':
-      lon = atof(&argv[1][2]);
+      lon = strtof(&argv[1][2], nullptr);
       break;
 
       // International airport code (most representative if there are more
       // than one i.e BOG
     case 'P':
-      prefix = &(argv[1][2]);
+      prefix = string(&argv[1][2]);
       break;
 
       // path to download data from NASA
       //  files must have in a directory by year. Each must start with
       //  aura_<YEAR>
     case 'D':
-      pathtodata = &(argv[1][2]);
+      pathtodata = string(&argv[1][2]);
       break;
 
     case 'S':
-      opt = atoi(&argv[1][2]);
+      opt = strtol(&argv[1][2], nullptr, 10);
       break;
 
     default:
@@ -80,50 +80,18 @@ int main(int argc, char *argv[]) {
   // Get process ID to make temporary files unique
   pid_t process_id = getpid();
 
-  // checking if dir exists
-  ifstream inLogChkDir;
-
-  char cmdChkDir[200];
-  char logChkDirFile[100];
-  int chkDir;
-
-  sprintf(logChkDirFile, "logChkDir_%d.txt", process_id);
-
-  strcpy(cmdChkDir, "test -d ");
-  strcat(cmdChkDir, pathtodata);
-  strcat(cmdChkDir, " ; echo $? > ");
-  strcat(cmdChkDir, logChkDirFile);
-
-  system(cmdChkDir);
-
-  inLogChkDir.open(logChkDirFile);
-  inLogChkDir >> chkDir;
-  inLogChkDir.close();
-  if (chkDir != 0) {
+  // Check if directory exists using std::filesystem
+  if (!fs::exists(pathtodata) || !fs::is_directory(pathtodata)) {
     cerr << "path to data does not exist. Please check.." << endl;
-    char rmCmd[150];
-    sprintf(rmCmd, "rm %s", logChkDirFile);
-    system(rmCmd);
     exit(8);
-  } else {
-    cout << "Path to data exists!! " << endl;
-    cout << pathtodata << endl;
-    char rmCmd[150];
-    sprintf(rmCmd, "rm %s", logChkDirFile);
-    system(rmCmd);
   }
 
-  char preLoc[100];
-  sprintf(preLoc, "%s", prefix);
-  cout << " location : " << preLoc << endl;
+  cout << "Path to data exists!! " << endl;
+  cout << pathtodata << endl;
 
-  float latHalf = 0.0;
+  cout << " location : " << prefix << endl;
 
-  if (lat >= 0) {
-    latHalf = ceil(lat) - 0.5;
-  } else {
-    latHalf = ceil(lat) + 0.5;
-  }
+  const float latHalf = (lat >= 0) ? ceil(lat) - 0.5f : ceil(lat) + 0.5f;
 
   if (abs(latHalf) > 89.5) {
     cerr << "latitude not valid.." << endl;
@@ -131,27 +99,21 @@ int main(int argc, char *argv[]) {
     exit(8);
   }
 
-  float lonBin;
-  lonBin = (lon - XMin) / (step) + 1;
-  int rLonBin;
-  rLonBin = round(lonBin);
+  const float lonBin = (lon - XMin) / step + 1;
+  const int rLonBin = static_cast<int>(round(lonBin));
 
   // in order to check if rLonBin - (rLonBin/bpLine)*25 is equal to cero
   // or bigger. If cero, it must take line before it is calculated to
   // obtain the string data and take the las 3 characteres of it.
   // Otherwise everithing is ok
-  int chkLonLine;
-  chkLonLine = rLonBin - (rLonBin / bpLine) * 25;
+  const int chkLonLine = rLonBin - (rLonBin / bpLine) * 25;
 
-  int rnLine; // reference line between 1 and 25
-  int nLine;  // line to reaf from file
-  char cnLine[100];
-  rnLine = rLonBin / bpLine +
-           1; // find the line number from 1 to 12 (25 bins times 12 = 300)
+  // reference line between 1 and 25
+  // find the line number from 1 to 12 (25 bins times 12 = 300)
   // last bin has 13 bins plus " lat =  ### " reference
+  const int rnLine = rLonBin / bpLine + 1;
+  int nLine; // line to read from file
 
-  stringstream ss;
-  stringstream ss1;
   size_t found;
 
   string strFName;
@@ -161,8 +123,7 @@ int main(int argc, char *argv[]) {
   string strDD;
 
   string sFileName;
-  char fileName[1000];
-  char dirFileName[1000];
+  string fileName;
 
   ifstream inList;
   ifstream inFile;
@@ -173,34 +134,26 @@ int main(int argc, char *argv[]) {
   int latLine;
   int YMIN, YMAX;
 
-  char outData[100];
-  char yy[100];
   float ud;
 
-  char cmdName[1000];
-  char sat[100];
-
   // Unique temporary file names using process ID
-  char listFile[100];
-  char logLatLineFile[100];
-  char logLonLineFile[100];
+  const string listFile = "list_" + to_string(process_id) + ".txt";
+  const string logLatLineFile = "logLatLine_" + to_string(process_id) + ".txt";
+  const string logLonLineFile = "logLonLine_" + to_string(process_id) + ".txt";
 
-  sprintf(listFile, "list_%d.txt", process_id);
-  sprintf(logLatLineFile, "logLatLine_%d.txt", process_id);
-  sprintf(logLonLineFile, "logLonLine_%d.txt", process_id);
-
+  string sat;
   if (opt == 1) {
     YMIN = 1979;
     YMAX = 1993;
-    sprintf(sat, "nimbus_");
+    sat = "nimbus_";
   } else if (opt == 2) {
     YMIN = 1994;
     YMAX = 1994;
-    sprintf(sat, "meteor_");
+    sat = "meteor_";
   } else if (opt == 3) {
     YMIN = 1996;
     YMAX = 2004;
-    sprintf(sat, "earth_");
+    sat = "earth_";
   } else {
     cerr << "Check options opt ?? .. " << endl;
     exit(9);
@@ -209,27 +162,16 @@ int main(int argc, char *argv[]) {
   cout << " sat: " << sat << endl;
 
   for (int i = YMIN; i <= YMAX; i++) {
-    sprintf(outData, "%s_%d.dat", preLoc, i);
+    const string outData = prefix + "_" + to_string(i) + ".dat";
     outFile.open(outData);
 
-    strcpy(dirFileName, pathtodata);
-    strcat(dirFileName, sat);
-    sprintf(yy, "%d", i);
-    strcat(dirFileName, yy);
+    const string dirFileName = pathtodata + sat + to_string(i);
 
     cout << "dir: " << dirFileName << endl;
 
-    strcpy(cmdName, "ls -1 ");
-    strcat(cmdName, dirFileName);
+    const string cmdName = "ls -1 " + dirFileName + "/L3*.txt > " + listFile;
 
-    // fix: before was /*.txt. From https server, a robots.txt file appears
-    // so the list will have a file different from NASA data (starts with L3)
-    // for nimbus, meteor and earth probe missions
-    // strcat(cmdName, "/*.txt > list.txt");
-    strcat(cmdName, "/L3*.txt > ");
-    strcat(cmdName, listFile);
-
-    system(cmdName);
+    system(cmdName.c_str());
 
     cout << "PROCESSING YEAR:  " << i << " ..." << endl;
 
@@ -242,54 +184,41 @@ int main(int argc, char *argv[]) {
 
       inFile.open(fileName);
 
-      char cLatHalf[10];
-      sprintf(cLatHalf, "%0.1f", latHalf);
+      // Build latitude string with proper formatting
+      string cLatHalf;
+      char buffer[20];
+      snprintf(buffer, sizeof(buffer), "%0.1f", latHalf);
+      cLatHalf = buffer;
 
-      char cmdSed[500];
-      strcpy(cmdSed, "sed -n '/lat =  ");
+      string cmdSed = "sed -n '/lat =  ";
       if (latHalf < -10) {
-        strcat(cmdSed, cLatHalf);
+        cmdSed += cLatHalf;
       } else if ((latHalf > -10) && (latHalf < 0)) {
-        strcat(cmdSed, " ");
-        strcat(cmdSed, cLatHalf);
+        cmdSed += " " + cLatHalf;
       } else if ((latHalf > 0) && (latHalf < 10)) {
-        strcat(cmdSed, "  ");
-        strcat(cmdSed, cLatHalf);
+        cmdSed += "  " + cLatHalf;
       } else {
-        strcat(cmdSed, " ");
-        strcat(cmdSed, cLatHalf);
+        cmdSed += " " + cLatHalf;
       }
 
-      strcat(cmdSed, "/=' ");
-      strcat(cmdSed, fileName);
-      strcat(cmdSed, " > ");
-      strcat(cmdSed, logLatLineFile);
-      system(cmdSed);
+      cmdSed += "/=' " + fileName + " > " + logLatLineFile;
+      system(cmdSed.c_str());
 
       // latLine = 0;
       inLogLatLine.open(logLatLineFile);
       inLogLatLine >> latLine;
       inLogLatLine.close();
-      char rmLatCmd[150];
-      sprintf(rmLatCmd, "rm %s", logLatLineFile);
-      system(rmLatCmd);
+      fs::remove(logLatLineFile);
 
       nLine = latLine - 12 + rnLine;
 
       if (chkLonLine == 0)
         nLine = nLine - 1;
 
-      sprintf(cnLine, "%d", nLine);
+      const string cmdAwk = "awk 'FNR==" + to_string(nLine) + "' " + fileName +
+                            " > " + logLonLineFile;
 
-      char cmdAwk[500];
-      strcpy(cmdAwk, "awk 'FNR==");
-      strcat(cmdAwk, cnLine);
-      strcat(cmdAwk, "' ");
-      strcat(cmdAwk, fileName);
-      strcat(cmdAwk, " > ");
-      strcat(cmdAwk, logLonLineFile);
-
-      system(cmdAwk);
+      system(cmdAwk.c_str());
 
       string sLine;
       string strBin;
@@ -298,9 +227,7 @@ int main(int argc, char *argv[]) {
       inLogLonLine.open(logLonLineFile);
       getline(inLogLonLine, sLine);
       inLogLonLine.close();
-      char rmLonCmd[150];
-      sprintf(rmLonCmd, "rm %s", logLonLineFile);
-      system(rmLonCmd);
+      fs::remove(logLonLineFile);
 
       if (chkLonLine == 0) {
         strBin = sLine.substr(73, 3);
@@ -313,18 +240,9 @@ int main(int argc, char *argv[]) {
       }
       cout << "ud: " << strBin << endl;
 
-      ss1.str("");
-      ss1.clear();
+      ud = strtof(strBin.c_str(), nullptr);
 
-      ss1 << strBin;
-      ss1 >> ud;
-
-      // it is very important to clear the stringstram ss
-      ss.str("");
-      ss.clear();
-
-      ss << fileName;
-      ss >> sFileName;
+      sFileName = fileName;
 
       if (opt == 1) {
         str3e = "n7t";
@@ -349,9 +267,7 @@ int main(int argc, char *argv[]) {
 
     } // while
     inList.close();
-    char rmListCmd[150];
-    sprintf(rmListCmd, "rm %s", listFile);
-    system(rmListCmd);
+    fs::remove(listFile);
     outFile.close();
 
   } // for

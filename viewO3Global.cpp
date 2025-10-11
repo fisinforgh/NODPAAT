@@ -28,6 +28,7 @@ private:
   TGComboBox *fYearCombo;
   TGComboBox *fGraphCombo;
   TGTextButton *fLoadButton;
+  TGTextButton *fRefreshButton;
   TGTextButton *fExitButton;
   TGTextButton *fExportButton;
   TGCheckButton *fMultiYearCheck;
@@ -69,6 +70,7 @@ public:
   void OnConnectHistoryToggled();
   void OnConnectTeoToggled();
   void ExportData();
+  void RefreshData();
 
   ClassDef(O3ViewerGUI, 0)
 };
@@ -214,6 +216,12 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fLoadButton->SetHeight(28);
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
   actionsGroup->AddFrame(fLoadButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 8, 5));
+
+  // Refresh button
+  fRefreshButton = new TGTextButton(actionsGroup, "&Refresh Locations", 203);
+  fRefreshButton->SetHeight(28);
+  fRefreshButton->Connect("Clicked()", "O3ViewerGUI", this, "RefreshData()");
+  actionsGroup->AddFrame(fRefreshButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 5, 5));
 
   // Export section
   TGLabel *exportTitle = new TGLabel(actionsGroup, "Export Data:");
@@ -1532,6 +1540,37 @@ void O3ViewerGUI::ExportData() {
     fStatusLabel->SetText("Export only available for History O3, O3 Teo Study, "
                           "or Superposition!");
   }
+}
+
+void O3ViewerGUI::RefreshData() {
+  // Close current file if open
+  if (fRootFile && fRootFile->IsOpen()) {
+    fRootFile->Close();
+    delete fRootFile;
+    fRootFile = nullptr;
+  }
+
+  // Clear canvas
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+  canvas->Clear();
+  canvas->Modified();
+  canvas->Update();
+
+  // Clear stored graphs
+  if (fGrHistory) {
+    delete fGrHistory;
+    fGrHistory = nullptr;
+  }
+  if (fGrTeo) {
+    delete fGrTeo;
+    fGrTeo = nullptr;
+  }
+
+  // Rescan locations
+  fStatusLabel->SetText("Refreshing locations...");
+  ScanLocations();
+
+  fStatusLabel->SetText("Locations refreshed!");
 }
 
 void O3ViewerGUI::CloseWindow() { gApplication->Terminate(0); }

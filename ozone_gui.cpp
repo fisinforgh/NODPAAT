@@ -378,7 +378,7 @@ public:
     fModeSelector = new TGComboBox(modeHFrame);
     fModeSelector->AddEntry("pgrid", 1);
     fModeSelector->AddEntry("location", 2);
-    fModeSelector->Select(1);
+    fModeSelector->Select(2);
     fModeSelector->Resize(200, 28);
     modeHFrame->AddFrame(
         fModeSelector,
@@ -411,7 +411,7 @@ public:
     TGHorizontalFrame *pathHFrame = new TGHorizontalFrame(pathFrame);
 
     fDataPathEntry = new TGTextEntry(pathHFrame, new TGTextBuffer(200));
-    fDataPathEntry->SetText("../../wget_ozono_NASA");
+    fDataPathEntry->SetText("Please select your data folder");
     fDataPathEntry->Resize(300, 28);
     pathHFrame->AddFrame(fDataPathEntry,
                          new TGLayoutHints(kLHintsExpandX, 5, 5, 5, 5));
@@ -1719,22 +1719,30 @@ public:
       return;
     }
 
-    // Check if macro file exists
-    if (gSystem->AccessPathName(macroName)) {
+    // Get the directory where the executable (and macros) are located
+    TString exeDir = gSystem->DirName(fExePath);
+    if (exeDir.IsNull() || fExePath.IsNull()) {
+      exeDir = gSystem->WorkingDirectory();
+    }
+
+    // Check if macro file exists in the executable directory
+    TString macroFullPath = Form("%s/%s", exeDir.Data(), macroName.Data());
+    if (gSystem->AccessPathName(macroFullPath)) {
       AppendMacroLog(
-          Form("Error: %s not found in current directory.", macroName.Data()));
+          Form("Error: %s not found in directory: %s", macroName.Data(), exeDir.Data()));
       return;
     }
 
-    // Build ROOT command based on selected macro
+    // Build ROOT command based on selected macro with full path
     TString rootCmd;
     if (macroName == "linearRelStudyO3vsSn.C") {
       // Get parameters for linearRelStudyO3vsSn
       int param1 = (int)fMacroParam1->GetNumber();
       TString param2 = fMacroParam2->GetText();
       double param3 = fMacroParam3->GetNumber();
-      rootCmd = Form("root -l -b -q 'linearRelStudyO3vsSn.C(%d,\"%s\",%g)'",
-                     param1, param2.Data(), param3);
+      TString macroPath = Form("%s/%s", exeDir.Data(), macroName.Data());
+      rootCmd = Form("root -l -b -q '%s(%d,\"%s\",%g)'",
+                     macroPath.Data(), param1, param2.Data(), param3);
     } else if (macroName == "macroO3teoGlobalHttp.C") {
       // Get parameters for macroO3teoGlobalHttp
       double lat = fMacroParam1->GetNumber();
@@ -1748,10 +1756,11 @@ public:
       double param9 = fMacroParam9->GetNumber();
       double param10 = fMacroParam10->GetNumber();
       double param11 = fMacroParam11->GetNumber();
+      TString macroPath = Form("%s/%s", exeDir.Data(), macroName.Data());
       rootCmd =
           Form("root -l -b -q "
-               "'macroO3teoGlobalHttp.C(%g,%g,\"%s\",%d,%d,%d,%d,%g,%g,%g,%g)'",
-               lat, lon, loc.Data(), param4, param5, param6, param7, param8,
+               "'%s(%g,%g,\"%s\",%d,%d,%d,%d,%g,%g,%g,%g)'",
+               macroPath.Data(), lat, lon, loc.Data(), param4, param5, param6, param7, param8,
                param9, param10, param11);
     } else {
       AppendMacroLog("Error: Unknown macro selected.");
@@ -1785,6 +1794,11 @@ public:
       dup2(pipeFd[1], STDOUT_FILENO);
       dup2(pipeFd[1], STDERR_FILENO);
       close(pipeFd[1]);
+
+      // Change to executable directory so macros can find their data files
+      if (chdir(exeDir.Data()) != 0) {
+        std::cerr << "Warning: Could not change to directory: " << exeDir.Data() << std::endl;
+      }
 
       execl("/bin/sh", "sh", "-c", rootCmd.Data(), (char *)nullptr);
       exit(1);
