@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ozone GUI - Component Hierarchy</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        .tree {
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre;
+        }
+        .root { color: #e74c3c; font-weight: bold; }
+        .level1 { color: #3498db; font-weight: bold; }
+        .tab { color: #2ecc71; font-weight: bold; }
+        .group { color: #f39c12; font-weight: bold; }
+        .component { color: #9b59b6; }
+        .widget { color: #34495e; }
+        .connector { color: #95a5a6; }
+
+        /* Tab-specific colors */
+        .welcome { color: #f39c12; }
+        .processor { color: #27ae60; }
+        .graphviewer { color: #8e44ad; }
+        .macrorunner { color: #e67e22; }
+        .viewo3 { color: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Ozone GUI - Component Hierarchy Tree</h1>
+        <div class="tree"><span class="root">OzoneGUI (TGMainFrame)</span>
+<span class="connector">│</span>
+<span class="connector">├──</span> <span class="level1">fMainTabs (TGTab)</span>
+<span class="connector">│   │</span>
+<span class="connector">│   ├──</span> <span class="tab welcome">Welcome Tab</span>
+<span class="connector">│   │   ├──</span> <span class="group welcome">TGVerticalFrame (Title Section)</span>
+<span class="connector">│   │   │   ├──</span> <span class="component">Program Title (TGLabel)</span>
+<span class="connector">│   │   │   └──</span> <span class="component">Subtitle (TGLabel)</span>
+<span class="connector">│   │   ├──</span> <span class="group welcome">TGVerticalFrame (Logo Section)</span>
+<span class="connector">│   │   │   └──</span> <span class="component">TGIcon / TGLabel (University Logo/Name)</span>
+<span class="connector">│   │   └──</span> <span class="group welcome">TGGroupFrame (Description Section)</span>
+<span class="connector">│   │       └──</span> <span class="component">TGTextView (Program Overview)</span>
+<span class="connector">│   │</span>
+<span class="connector">│   ├──</span> <span class="tab processor">Processor Tab</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Mode)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fModeSelector (TGComboBox)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Location)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fLocationEntry (TGTextEntry)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Data Path)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fDataPathEntry (TGTextEntry)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">Browse Button (TGTextButton)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Latitude Range)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fLatSlider (TGDoubleHSlider)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fLatMinLabel (TGLabel)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fLatMaxLabel (TGLabel)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Parameters)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fParamGrid (TGNumberEntry)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fParamEvents (TGNumberEntry)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fParamThreads (TGNumberEntry)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">TGGroupFrame (Performance Options)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fSilentModeButton (TGTextButton)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fNotificationButton (TGTextButton)</span>
+<span class="connector">│   │   ├──</span> <span class="group processor">Buttons Frame</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fRunButton (TGTextButton)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fCancelButton (TGTextButton)</span>
+<span class="connector">│   │   └──</span> <span class="group processor">TGGroupFrame (Process Log)</span>
+<span class="connector">│   │       └──</span> <span class="widget">fLogView (TGTextView)</span>
+<span class="connector">│   │</span>
+<span class="connector">│   ├──</span> <span class="tab graphviewer">Graph Viewer Tab</span>
+<span class="connector">│   │   ├──</span> <span class="group graphviewer">TGGroupFrame (Graph Directory)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fGraphPathEntry (TGTextEntry)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">Browse Button (TGTextButton)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fRefreshButton (TGTextButton)</span>
+<span class="connector">│   │   ├──</span> <span class="group graphviewer">TGGroupFrame (Folder Filter)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fFolderFilterEntry (TGTextEntry)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">Apply Button (TGTextButton)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fClearFilterButton (TGTextButton)</span>
+<span class="connector">│   │   ├──</span> <span class="group graphviewer">TGHorizontalFrame (Lists)</span>
+<span class="connector">│   │   │   ├──</span> <span class="group graphviewer">TGGroupFrame (Skim Folders)</span>
+<span class="connector">│   │   │   │   └──</span> <span class="widget">fFolderListBox (TGListBox)</span>
+<span class="connector">│   │   │   └──</span> <span class="group graphviewer">TGGroupFrame (File Info)</span>
+<span class="connector">│   │   │       └──</span> <span class="widget">fFileListBox (TGListBox)</span>
+<span class="connector">│   │   ├──</span> <span class="widget">fGraphInfoLabel (TGLabel)</span>
+<span class="connector">│   │   └──</span> <span class="group graphviewer">TGGroupFrame (Graph Display)</span>
+<span class="connector">│   │       └──</span> <span class="widget">fGraphCanvas (TRootEmbeddedCanvas)</span>
+<span class="connector">│   │</span>
+<span class="connector">│   ├──</span> <span class="tab macrorunner">Macro Runner Tab</span>
+<span class="connector">│   │   ├──</span> <span class="group macrorunner">TGGroupFrame (Macro Selection)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fMacroSelector (TGComboBox)</span>
+<span class="connector">│   │   ├──</span> <span class="group macrorunner">TGGroupFrame (Macro Parameters)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fMacroParam1 (TGNumberEntry)</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fMacroParam2 (TGTextEntry)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fMacroParam3-11 (TGNumberEntry)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">(Dynamic based on selected macro)</span>
+<span class="connector">│   │   ├──</span> <span class="group macrorunner">Buttons Frame</span>
+<span class="connector">│   │   │   ├──</span> <span class="widget">fRunMacroButton (TGTextButton)</span>
+<span class="connector">│   │   │   └──</span> <span class="widget">fCancelMacroButton (TGTextButton)</span>
+<span class="connector">│   │   └──</span> <span class="group macrorunner">TGGroupFrame (Macro Log)</span>
+<span class="connector">│   │       └──</span> <span class="widget">fMacroLogView (TGTextView)</span>
+<span class="connector">│   │</span>
+<span class="connector">│   └──</span> <span class="tab viewo3">View O3 Global Tab</span>
+<span class="connector">│       ├──</span> <span class="group viewo3">TGHorizontalFrame (Control Panel)</span>
+<span class="connector">│       │   ├──</span> <span class="group viewo3">TGGroupFrame (Data Selection)</span>
+<span class="connector">│       │   │   ├──</span> <span class="widget">fLocationCombo (TGComboBox)</span>
+<span class="connector">│       │   │   ├──</span> <span class="widget">fCategoryCombo (TGComboBox)</span>
+<span class="connector">│       │   │   ├──</span> <span class="widget">fYearCombo (TGComboBox)</span>
+<span class="connector">│       │   │   └──</span> <span class="widget">fGraphCombo (TGComboBox)</span>
+<span class="connector">│       │   ├──</span> <span class="group viewo3">TGGroupFrame (Display Options)</span>
+<span class="connector">│       │   │   ├──</span> <span class="widget">fMultiYearCheck (TGCheckButton)</span>
+<span class="connector">│       │   │   ├──</span> <span class="group viewo3">Superposition Settings</span>
+<span class="connector">│       │   │   │   ├──</span> <span class="widget">fHistoryColorSelect (TGColorSelect)</span>
+<span class="connector">│       │   │   │   └──</span> <span class="widget">fTeoColorSelect (TGColorSelect)</span>
+<span class="connector">│       │   │   ├──</span> <span class="widget">fConnectHistoryCheck (TGCheckButton)</span>
+<span class="connector">│       │   │   └──</span> <span class="widget">fConnectTeoCheck (TGCheckButton)</span>
+<span class="connector">│       │   └──</span> <span class="group viewo3">TGGroupFrame (Actions)</span>
+<span class="connector">│       │       ├──</span> <span class="widget">fLoadButton (TGTextButton)</span>
+<span class="connector">│       │       ├──</span> <span class="widget">fExportAllYearsCheck (TGCheckButton)</span>
+<span class="connector">│       │       ├──</span> <span class="widget">fExportButton (TGTextButton)</span>
+<span class="connector">│       │       ├──</span> <span class="widget">fExitButton (TGTextButton)</span>
+<span class="connector">│       │       └──</span> <span class="widget">fStatusLabel (TGLabel)</span>
+<span class="connector">│       └──</span> <span class="widget">fEmbCanvas (TRootEmbeddedCanvas)</span>
+</div>
+    </div>
+</body>
+</html>

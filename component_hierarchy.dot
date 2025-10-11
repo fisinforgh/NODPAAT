@@ -1,0 +1,231 @@
+digraph ComponentHierarchy {
+    // Graph settings
+    rankdir=TB;
+    bgcolor="white";
+    node [shape=box, style=filled, fontname="Arial", fontsize=10];
+    edge [color="#666666", penwidth=1.5];
+
+    // Root node
+    OzoneGUI [label="OzoneGUI\n(TGMainFrame)", fillcolor="#FF6B6B", fontcolor="white", fontsize=12, style="filled,rounded"];
+
+    // Main Tabs container
+    fMainTabs [label="fMainTabs\n(TGTab)", fillcolor="#4ECDC4", fontcolor="white", fontsize=11, style="filled,rounded"];
+
+    // Tab nodes
+    WelcomeTab [label="Welcome Tab", fillcolor="#95E1D3", fontcolor="black", style="filled,rounded"];
+    ProcessorTab [label="Processor Tab", fillcolor="#95E1D3", fontcolor="black", style="filled,rounded"];
+    GraphViewerTab [label="Graph Viewer Tab", fillcolor="#95E1D3", fontcolor="black", style="filled,rounded"];
+    MacroRunnerTab [label="Macro Runner Tab", fillcolor="#95E1D3", fontcolor="black", style="filled,rounded"];
+    ViewO3GlobalTab [label="View O3 Global Tab", fillcolor="#95E1D3", fontcolor="black", style="filled,rounded"];
+
+    // Welcome Tab Components
+    WelcomeTitle [label="TGVerticalFrame\n(Title Section)", fillcolor="#F8B400", style="filled,rounded"];
+    WelcomeProgramTitle [label="Program Title\n(TGLabel)", fillcolor="#FFE66D", style="filled,rounded"];
+    WelcomeSubtitle [label="Subtitle\n(TGLabel)", fillcolor="#FFE66D", style="filled,rounded"];
+
+    WelcomeLogo [label="TGVerticalFrame\n(Logo Section)", fillcolor="#F8B400", style="filled,rounded"];
+    WelcomeLogoIcon [label="TGIcon / TGLabel\n(University Logo)", fillcolor="#FFE66D", style="filled,rounded"];
+
+    WelcomeDesc [label="TGGroupFrame\n(Description)", fillcolor="#F8B400", style="filled,rounded"];
+    WelcomeTextView [label="TGTextView\n(Program Overview)", fillcolor="#FFE66D", style="filled,rounded"];
+
+    // Processor Tab Components
+    ProcMode [label="TGGroupFrame\n(Mode)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcModeSelector [label="fModeSelector\n(TGComboBox)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcLocation [label="TGGroupFrame\n(Location)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcLocationEntry [label="fLocationEntry\n(TGTextEntry)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcDataPath [label="TGGroupFrame\n(Data Path)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcDataPathEntry [label="fDataPathEntry\n(TGTextEntry)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcBrowseBtn [label="Browse Button\n(TGTextButton)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcLatRange [label="TGGroupFrame\n(Latitude Range)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcLatSlider [label="fLatSlider\n(TGDoubleHSlider)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcLatMinLabel [label="fLatMinLabel\n(TGLabel)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcLatMaxLabel [label="fLatMaxLabel\n(TGLabel)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcParams [label="TGGroupFrame\n(Parameters)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcParamGrid [label="fParamGrid\n(TGNumberEntry)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcParamEvents [label="fParamEvents\n(TGNumberEntry)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcParamThreads [label="fParamThreads\n(TGNumberEntry)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcPerf [label="TGGroupFrame\n(Performance)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcSilentBtn [label="fSilentModeButton\n(TGTextButton)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcNotifBtn [label="fNotificationButton\n(TGTextButton)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcButtons [label="Buttons Frame", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcRunBtn [label="fRunButton\n(TGTextButton)", fillcolor="#DCEDC1", style="filled,rounded"];
+    ProcCancelBtn [label="fCancelButton\n(TGTextButton)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    ProcLog [label="TGGroupFrame\n(Process Log)", fillcolor="#A8E6CF", style="filled,rounded"];
+    ProcLogView [label="fLogView\n(TGTextView)", fillcolor="#DCEDC1", style="filled,rounded"];
+
+    // Graph Viewer Tab Components
+    GraphDir [label="TGGroupFrame\n(Graph Directory)", fillcolor="#B4A7D6", style="filled,rounded"];
+    GraphPathEntry [label="fGraphPathEntry\n(TGTextEntry)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphBrowseBtn [label="Browse Button\n(TGTextButton)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphRefreshBtn [label="fRefreshButton\n(TGTextButton)", fillcolor="#D5C6E0", style="filled,rounded"];
+
+    GraphFilter [label="TGGroupFrame\n(Folder Filter)", fillcolor="#B4A7D6", style="filled,rounded"];
+    GraphFilterEntry [label="fFolderFilterEntry\n(TGTextEntry)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphApplyBtn [label="Apply Button\n(TGTextButton)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphClearBtn [label="fClearFilterButton\n(TGTextButton)", fillcolor="#D5C6E0", style="filled,rounded"];
+
+    GraphLists [label="TGHorizontalFrame\n(Lists)", fillcolor="#B4A7D6", style="filled,rounded"];
+    GraphSkimFrame [label="TGGroupFrame\n(Skim Folders)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphFolderList [label="fFolderListBox\n(TGListBox)", fillcolor="#E8DFF5", style="filled,rounded"];
+    GraphFileFrame [label="TGGroupFrame\n(File Info)", fillcolor="#D5C6E0", style="filled,rounded"];
+    GraphFileList [label="fFileListBox\n(TGListBox)", fillcolor="#E8DFF5", style="filled,rounded"];
+
+    GraphInfoLabel [label="fGraphInfoLabel\n(TGLabel)", fillcolor="#B4A7D6", style="filled,rounded"];
+
+    GraphDisplay [label="TGGroupFrame\n(Graph Display)", fillcolor="#B4A7D6", style="filled,rounded"];
+    GraphCanvas [label="fGraphCanvas\n(TRootEmbeddedCanvas)", fillcolor="#D5C6E0", style="filled,rounded"];
+
+    // Macro Runner Tab Components
+    MacroSel [label="TGGroupFrame\n(Macro Selection)", fillcolor="#FAB1A0", style="filled,rounded"];
+    MacroSelector [label="fMacroSelector\n(TGComboBox)", fillcolor="#FFEAA7", style="filled,rounded"];
+
+    MacroParams [label="TGGroupFrame\n(Macro Parameters)", fillcolor="#FAB1A0", style="filled,rounded"];
+    MacroParam1 [label="fMacroParam1\n(TGNumberEntry)", fillcolor="#FFEAA7", style="filled,rounded"];
+    MacroParam2 [label="fMacroParam2\n(TGTextEntry)", fillcolor="#FFEAA7", style="filled,rounded"];
+    MacroParam3_11 [label="fMacroParam3-11\n(TGNumberEntry)\n(Dynamic)", fillcolor="#FFEAA7", style="filled,rounded"];
+
+    MacroButtons [label="Buttons Frame", fillcolor="#FAB1A0", style="filled,rounded"];
+    MacroRunBtn [label="fRunMacroButton\n(TGTextButton)", fillcolor="#FFEAA7", style="filled,rounded"];
+    MacroCancelBtn [label="fCancelMacroButton\n(TGTextButton)", fillcolor="#FFEAA7", style="filled,rounded"];
+
+    MacroLog [label="TGGroupFrame\n(Macro Log)", fillcolor="#FAB1A0", style="filled,rounded"];
+    MacroLogView [label="fMacroLogView\n(TGTextView)", fillcolor="#FFEAA7", style="filled,rounded"];
+
+    // View O3 Global Tab Components
+    ViewO3Control [label="TGHorizontalFrame\n(Control Panel)", fillcolor="#74B9FF", style="filled,rounded"];
+
+    ViewO3DataSel [label="TGGroupFrame\n(Data Selection)", fillcolor="#A29BFE", style="filled,rounded"];
+    ViewO3LocationCombo [label="fLocationCombo\n(TGComboBox)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3CategoryCombo [label="fCategoryCombo\n(TGComboBox)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3YearCombo [label="fYearCombo\n(TGComboBox)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3GraphCombo [label="fGraphCombo\n(TGComboBox)", fillcolor="#DFE6E9", style="filled,rounded"];
+
+    ViewO3Display [label="TGGroupFrame\n(Display Options)", fillcolor="#A29BFE", style="filled,rounded"];
+    ViewO3MultiYearCheck [label="fMultiYearCheck\n(TGCheckButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3SuperPos [label="Superposition Settings", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3HistoryColor [label="fHistoryColorSelect\n(TGColorSelect)", fillcolor="#F8F9FA", style="filled,rounded"];
+    ViewO3TeoColor [label="fTeoColorSelect\n(TGColorSelect)", fillcolor="#F8F9FA", style="filled,rounded"];
+    ViewO3ConnectHistory [label="fConnectHistoryCheck\n(TGCheckButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3ConnectTeo [label="fConnectTeoCheck\n(TGCheckButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+
+    ViewO3Actions [label="TGGroupFrame\n(Actions)", fillcolor="#A29BFE", style="filled,rounded"];
+    ViewO3LoadBtn [label="fLoadButton\n(TGTextButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3ExportAllCheck [label="fExportAllYearsCheck\n(TGCheckButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3ExportBtn [label="fExportButton\n(TGTextButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3ExitBtn [label="fExitButton\n(TGTextButton)", fillcolor="#DFE6E9", style="filled,rounded"];
+    ViewO3Status [label="fStatusLabel\n(TGLabel)", fillcolor="#DFE6E9", style="filled,rounded"];
+
+    ViewO3Canvas [label="fEmbCanvas\n(TRootEmbeddedCanvas)", fillcolor="#74B9FF", style="filled,rounded"];
+
+    // Main connections
+    OzoneGUI -> fMainTabs;
+
+    fMainTabs -> WelcomeTab;
+    fMainTabs -> ProcessorTab;
+    fMainTabs -> GraphViewerTab;
+    fMainTabs -> MacroRunnerTab;
+    fMainTabs -> ViewO3GlobalTab;
+
+    // Welcome Tab connections
+    WelcomeTab -> WelcomeTitle;
+    WelcomeTab -> WelcomeLogo;
+    WelcomeTab -> WelcomeDesc;
+    WelcomeTitle -> WelcomeProgramTitle;
+    WelcomeTitle -> WelcomeSubtitle;
+    WelcomeLogo -> WelcomeLogoIcon;
+    WelcomeDesc -> WelcomeTextView;
+
+    // Processor Tab connections
+    ProcessorTab -> ProcMode;
+    ProcessorTab -> ProcLocation;
+    ProcessorTab -> ProcDataPath;
+    ProcessorTab -> ProcLatRange;
+    ProcessorTab -> ProcParams;
+    ProcessorTab -> ProcPerf;
+    ProcessorTab -> ProcButtons;
+    ProcessorTab -> ProcLog;
+
+    ProcMode -> ProcModeSelector;
+    ProcLocation -> ProcLocationEntry;
+    ProcDataPath -> ProcDataPathEntry;
+    ProcDataPath -> ProcBrowseBtn;
+    ProcLatRange -> ProcLatSlider;
+    ProcLatRange -> ProcLatMinLabel;
+    ProcLatRange -> ProcLatMaxLabel;
+    ProcParams -> ProcParamGrid;
+    ProcParams -> ProcParamEvents;
+    ProcParams -> ProcParamThreads;
+    ProcPerf -> ProcSilentBtn;
+    ProcPerf -> ProcNotifBtn;
+    ProcButtons -> ProcRunBtn;
+    ProcButtons -> ProcCancelBtn;
+    ProcLog -> ProcLogView;
+
+    // Graph Viewer Tab connections
+    GraphViewerTab -> GraphDir;
+    GraphViewerTab -> GraphFilter;
+    GraphViewerTab -> GraphLists;
+    GraphViewerTab -> GraphInfoLabel;
+    GraphViewerTab -> GraphDisplay;
+
+    GraphDir -> GraphPathEntry;
+    GraphDir -> GraphBrowseBtn;
+    GraphDir -> GraphRefreshBtn;
+    GraphFilter -> GraphFilterEntry;
+    GraphFilter -> GraphApplyBtn;
+    GraphFilter -> GraphClearBtn;
+    GraphLists -> GraphSkimFrame;
+    GraphLists -> GraphFileFrame;
+    GraphSkimFrame -> GraphFolderList;
+    GraphFileFrame -> GraphFileList;
+    GraphDisplay -> GraphCanvas;
+
+    // Macro Runner Tab connections
+    MacroRunnerTab -> MacroSel;
+    MacroRunnerTab -> MacroParams;
+    MacroRunnerTab -> MacroButtons;
+    MacroRunnerTab -> MacroLog;
+
+    MacroSel -> MacroSelector;
+    MacroParams -> MacroParam1;
+    MacroParams -> MacroParam2;
+    MacroParams -> MacroParam3_11;
+    MacroButtons -> MacroRunBtn;
+    MacroButtons -> MacroCancelBtn;
+    MacroLog -> MacroLogView;
+
+    // View O3 Global Tab connections
+    ViewO3GlobalTab -> ViewO3Control;
+    ViewO3GlobalTab -> ViewO3Canvas;
+
+    ViewO3Control -> ViewO3DataSel;
+    ViewO3Control -> ViewO3Display;
+    ViewO3Control -> ViewO3Actions;
+
+    ViewO3DataSel -> ViewO3LocationCombo;
+    ViewO3DataSel -> ViewO3CategoryCombo;
+    ViewO3DataSel -> ViewO3YearCombo;
+    ViewO3DataSel -> ViewO3GraphCombo;
+
+    ViewO3Display -> ViewO3MultiYearCheck;
+    ViewO3Display -> ViewO3SuperPos;
+    ViewO3Display -> ViewO3ConnectHistory;
+    ViewO3Display -> ViewO3ConnectTeo;
+
+    ViewO3SuperPos -> ViewO3HistoryColor;
+    ViewO3SuperPos -> ViewO3TeoColor;
+
+    ViewO3Actions -> ViewO3LoadBtn;
+    ViewO3Actions -> ViewO3ExportAllCheck;
+    ViewO3Actions -> ViewO3ExportBtn;
+    ViewO3Actions -> ViewO3ExitBtn;
+    ViewO3Actions -> ViewO3Status;
+}

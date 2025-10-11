@@ -24,6 +24,10 @@
 #include <TRootEmbeddedCanvas.h>
 #include <TSystem.h>
 #include <TTimer.h>
+#include <TImage.h>
+#include <TGPicture.h>
+#include <TGIcon.h>
+#include <TGFont.h>
 #include <chrono>
 #include <ctime>
 #include <dirent.h>
@@ -117,6 +121,10 @@ public:
     // Create main tab widget
     fMainTabs = new TGTab(this, 600, 800);
 
+    // ======== WELCOME TAB ========
+    TGCompositeFrame *welcomeTab = fMainTabs->AddTab("Welcome");
+    CreateWelcomeInterface(welcomeTab);
+
     // ======== PROCESSOR TAB ========
     TGCompositeFrame *processorTab = fMainTabs->AddTab("Processor");
 
@@ -163,7 +171,13 @@ public:
     // Final setup
     SetWindowName("Optimized Ozone Processor GUI with Graph Viewer");
     MapSubwindows();
-    Resize(800, 900);
+
+    // Get screen dimensions and resize to fullscreen
+    UInt_t screenWidth = gClient->GetDisplayWidth();
+    UInt_t screenHeight = gClient->GetDisplayHeight();
+    Resize(screenWidth, screenHeight);
+    Move(0, 0);
+
     MapWindow();
 
     UpdateLatLabels();
@@ -174,6 +188,146 @@ public:
 
     // Initialize macro parameter visibility
     UpdateMacroParameters();
+  }
+
+  void CreateWelcomeInterface(TGCompositeFrame *parent) {
+    // Main container with vertical layout - everything centered
+    TGVerticalFrame *mainFrame = new TGVerticalFrame(parent, 600, 700);
+
+    // -------- Title Section (First) --------
+    TGVerticalFrame *titleFrame = new TGVerticalFrame(mainFrame);
+
+    TGLabel *programTitle = new TGLabel(titleFrame, "Ozone Processor - Graphical Interface");
+    TGFont *progFont = gClient->GetFont("-*-helvetica-bold-r-*-*-20-*-*-*-*-*-*-*");
+    if (progFont) {
+      programTitle->SetTextFont(progFont);
+    }
+    titleFrame->AddFrame(programTitle, new TGLayoutHints(kLHintsCenterX, 10, 10, 20, 5));
+
+    TGLabel *subtitle = new TGLabel(titleFrame, "NASA Ozone Data Processing and Analysis Tool");
+    TGFont *subFont = gClient->GetFont("-*-helvetica-medium-r-*-*-14-*-*-*-*-*-*-*");
+    if (subFont) {
+      subtitle->SetTextFont(subFont);
+    }
+    titleFrame->AddFrame(subtitle, new TGLayoutHints(kLHintsCenterX, 10, 10, 5, 15));
+
+    mainFrame->AddFrame(titleFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 10, 5));
+
+    // -------- Logo Section (Below Title) --------
+    TGVerticalFrame *logoFrame = new TGVerticalFrame(mainFrame, 150, 150);
+
+    // Try to load the university logo
+    TString logoPath = "logo_ud.png";
+    const TGPicture *logoPic = nullptr;
+
+    if (!gSystem->AccessPathName(logoPath)) {
+      logoPic = gClient->GetPicture(logoPath);
+    }
+
+    if (logoPic) {
+      // Scale logo to max 150x150 pixels
+      UInt_t maxSize = 150;
+      UInt_t logoWidth = logoPic->GetWidth();
+      UInt_t logoHeight = logoPic->GetHeight();
+
+      // Calculate scaled dimensions maintaining aspect ratio
+      if (logoWidth > maxSize || logoHeight > maxSize) {
+        Float_t scale = TMath::Min((Float_t)maxSize/logoWidth, (Float_t)maxSize/logoHeight);
+        logoWidth = (UInt_t)(logoWidth * scale);
+        logoHeight = (UInt_t)(logoHeight * scale);
+      }
+
+      TGIcon *logoIcon = new TGIcon(logoFrame, logoPic, logoWidth, logoHeight);
+      logoFrame->AddFrame(logoIcon, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 5, 5));
+    } else {
+      // If logo not found, display university name
+      TGLabel *uniLabel = new TGLabel(logoFrame, "Universidad Distrital\nFrancisco Jose de Caldas");
+      uniLabel->SetTextJustify(kTextCenterX);
+      TGFont *uniFont = gClient->GetFont("-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*");
+      if (uniFont) {
+        uniLabel->SetTextFont(uniFont);
+      }
+      logoFrame->AddFrame(uniLabel, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 20, 20));
+    }
+
+    mainFrame->AddFrame(logoFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 5, 10));
+
+    // -------- Program Description --------
+    TGGroupFrame *descFrame = new TGGroupFrame(mainFrame, "Program Overview");
+    TGTextView *descText = new TGTextView(descFrame, 700, 500);
+
+    descText->AddLine("OVERVIEW");
+    descText->AddLine("--------");
+    descText->AddLine("This application provides a comprehensive interface for processing and analyzing");
+    descText->AddLine("NASA ozone data from satellite measurements.");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("MAIN FEATURES");
+    descText->AddLine("=============");
+    descText->AddLine("");
+    descText->AddLine("[ 1 ] PROCESSOR TAB");
+    descText->AddLine("      Process ozone data using optimized algorithms");
+    descText->AddLine("");
+    descText->AddLine("      Execution Modes:");
+    descText->AddLine("      • pgrid     - Process data for a latitude range grid");
+    descText->AddLine("      • location  - Process data for a specific location");
+    descText->AddLine("");
+    descText->AddLine("      Features:");
+    descText->AddLine("      • Configurable parameters (grid size, events, threads)");
+    descText->AddLine("      • Real-time process monitoring with log output");
+    descText->AddLine("      • Silent mode for improved performance");
+    descText->AddLine("      • Desktop notifications on completion");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("[ 2 ] GRAPH VIEWER TAB");
+    descText->AddLine("      Browse and visualize processed ozone data");
+    descText->AddLine("");
+    descText->AddLine("      Features:");
+    descText->AddLine("      • Navigate through skim folders organized by coordinates");
+    descText->AddLine("      • Automatic graph loading and display");
+    descText->AddLine("      • Filter folders by name for quick access");
+    descText->AddLine("      • Display multiple graphs and histograms simultaneously");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("[ 3 ] MACRO RUNNER TAB");
+    descText->AddLine("      Execute ROOT macros for advanced analysis");
+    descText->AddLine("");
+    descText->AddLine("      Available Macros:");
+    descText->AddLine("      • linearRelStudyO3vsSn.C    - Linear relation studies between O3 and Sn");
+    descText->AddLine("      • macroO3teoGlobalHttp.C    - Global O3 theoretical analysis");
+    descText->AddLine("");
+    descText->AddLine("      Features:");
+    descText->AddLine("      • Dynamic parameter configuration");
+    descText->AddLine("      • Real-time macro execution monitoring");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("[ 4 ] VIEW O3 GLOBAL TAB");
+    descText->AddLine("      Visualize global ozone data from the ana schema");
+    descText->AddLine("");
+    descText->AddLine("      Features:");
+    descText->AddLine("      • Download historical data (O3 history and O3 theoretical)");
+    descText->AddLine("      • Interactive graphs with customizable display options");
+    descText->AddLine("      • Global ozone trend analysis");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("RECOMMENDED WORKFLOW");
+    descText->AddLine("====================");
+    descText->AddLine("");
+    descText->AddLine("  1. Process raw NASA data using the Processor tab");
+    descText->AddLine("  2. View results in the Graph Viewer tab");
+    descText->AddLine("  3. Run advanced analysis using the Macro Runner");
+    descText->AddLine("  4. Explore global trends in View O3 Global tab");
+    descText->AddLine("");
+    descText->AddLine("");
+    descText->AddLine("-----------------------------------------------------------------------------");
+    descText->AddLine("Developed at Universidad Distrital Francisco Jose de Caldas");
+    descText->AddLine("For research on atmospheric ozone measurements and analysis");
+    descText->AddLine("-----------------------------------------------------------------------------");
+
+    descFrame->AddFrame(descText, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 10, 10));
+    mainFrame->AddFrame(descFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 20, 20, 10, 20));
+
+    parent->AddFrame(mainFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
   }
 
   void CreateProcessorInterface(TGCompositeFrame *parent) {

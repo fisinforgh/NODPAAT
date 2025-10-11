@@ -1,0 +1,292 @@
+@startuml Ozone_GUI_Structure
+!theme cerulean-outline
+skinparam backgroundColor #F5F5F5
+skinparam defaultFontSize 12
+skinparam defaultFontName Arial
+
+title Ozone GUI - Application Structure
+
+package "Main Application" #LightBlue {
+    [Ozone GUI\nMain Window] as MainWindow
+}
+
+package "Welcome Tab" #SkyBlue {
+    [University Logo] as Logo
+    [Program Title] as Title
+    [Program Overview\nText Area] as Overview
+}
+
+package "Processor Tab" #Salmon {
+    component "Mode Selection" as Mode {
+        [pgrid/location\nComboBox] as ModeCombo
+    }
+
+    component "Input Configuration" as Input {
+        [Data Path Entry] as DataPath
+        [Location Entry] as Location
+        [Browse Button] as Browse
+    }
+
+    component "Parameters" as Params {
+        [Latitude Slider] as LatSlider
+        [Grid Size] as Grid
+        [Events] as Events
+        [Threads] as Threads
+    }
+
+    component "Execution" as Exec {
+        [Run Button] as Run
+        [Cancel Button] as Cancel
+        [Process Log] as Log
+    }
+}
+
+package "Graph Viewer Tab" #LightGreen {
+    component "Navigation" as Nav {
+        [Directory Path] as DirPath
+        [Folder Filter] as Filter
+        [Folder List] as FolderList
+    }
+
+    component "Display" as Display {
+        [Graph Canvas] as Canvas
+        [File Info] as FileInfo
+    }
+}
+
+package "Macro Runner Tab" #Orange {
+    component "Macro Selection" as MacroSel {
+        [Macro ComboBox] as MacroCombo
+    }
+
+    component "Parameters" as MacroParams {
+        [Dynamic Parameter\nEntries (1-11)] as Params11
+    }
+
+    component "Execution" as MacroExec {
+        [Run Macro] as RunMacro
+        [Macro Log] as MacroLog
+    }
+}
+
+package "View O3 Global Tab" #Plum {
+    component "Data Selection" as DataSel {
+        [Location ComboBox] as LocCombo
+        [Category ComboBox] as CatCombo
+        [Year ComboBox] as YearCombo
+        [Graph ComboBox] as GraphCombo
+    }
+
+    component "Display Options" as DispOpts {
+        [Multi-Year Panel] as MultiYear
+        [Color Selectors] as Colors
+        [Connect Lines] as Connect
+    }
+
+    component "Actions" as Actions {
+        [Load Graph] as Load
+        [Export Data] as Export
+        [Status Label] as Status
+    }
+
+    component "Canvas" as O3Canvas {
+        [Embedded Canvas] as EmbCanvas
+    }
+}
+
+MainWindow --> Logo
+MainWindow --> Mode
+MainWindow --> Nav
+MainWindow --> MacroSel
+MainWindow --> DataSel
+
+@enduml
+
+@startuml Ozone_GUI_Workflow
+!theme cerulean-outline
+skinparam backgroundColor #F5F5F5
+
+title User Workflow
+
+actor User
+participant "Welcome\nTab" as Welcome #SkyBlue
+participant "Processor\nTab" as Processor #Salmon
+participant "Graph Viewer\nTab" as Viewer #LightGreen
+participant "Macro Runner\nTab" as Macro #Orange
+participant "View O3 Global\nTab" as Global #Plum
+
+User -> Welcome: Launch Application
+activate Welcome
+Welcome --> User: Show Overview
+deactivate Welcome
+
+User -> Processor: Configure Processing
+activate Processor
+Processor -> Processor: Set Parameters
+Processor -> Processor: Run Processing
+Processor --> User: Show Logs
+deactivate Processor
+
+User -> Viewer: View Results
+activate Viewer
+Viewer -> Viewer: Browse Folders
+Viewer -> Viewer: Load Graphs
+Viewer --> User: Display Graphs
+deactivate Viewer
+
+User -> Macro: Run Analysis
+activate Macro
+Macro -> Macro: Select Macro
+Macro -> Macro: Set Parameters
+Macro -> Macro: Execute
+Macro --> User: Show Results
+deactivate Macro
+
+User -> Global: Global Analysis
+activate Global
+Global -> Global: Select Location
+Global -> Global: Choose Category
+Global -> Global: Load Data
+Global -> Global: Export Results
+Global --> User: Show Global Trends
+deactivate Global
+
+@enduml
+
+@startuml Ozone_GUI_Components
+!theme cerulean-outline
+skinparam backgroundColor #F5F5F5
+skinparam classBackgroundColor White
+skinparam classBorderColor Black
+
+title Component Class Diagram
+
+class OzoneGUI {
+    - TGTab* fMainTabs
+    - TGComboBox* fModeSelector
+    - TGTextEntry* fDataPathEntry
+    - TGDoubleHSlider* fLatSlider
+    - TGNumberEntry* fParamGrid
+    - TGNumberEntry* fParamEvents
+    - TGNumberEntry* fParamThreads
+    - TGTextView* fLogView
+    - TRootEmbeddedCanvas* fGraphCanvas
+    - TGComboBox* fMacroSelector
+    - pid_t fProcessPid
+    - pid_t fMacroPid
+    --
+    + OzoneGUI(w, h)
+    + ~OzoneGUI()
+    + CreateWelcomeInterface()
+    + CreateProcessorInterface()
+    + CreateGraphInterface()
+    + CreateMacroInterface()
+    + RunProcessor()
+    + CancelProcessor()
+    + LoadGraph()
+    + RunMacro()
+    + UpdateMacroParameters()
+}
+
+class O3ViewerGUI {
+    - TGComboBox* fLocationCombo
+    - TGComboBox* fCategoryCombo
+    - TGComboBox* fYearCombo
+    - TGComboBox* fGraphCombo
+    - TGColorSelect* fHistoryColorSelect
+    - TGColorSelect* fTeoColorSelect
+    - TRootEmbeddedCanvas* fEmbCanvas
+    - TFile* fRootFile
+    --
+    + O3ViewerGUI(w, h, basedir)
+    + ~O3ViewerGUI()
+    + ScanLocations()
+    + LoadFile()
+    + LoadGraph()
+    + LoadSuperposition()
+    + LoadMultiYearPanel()
+    + ExportData()
+}
+
+class TGMainFrame {
+    # TList* fList
+    --
+    + MapWindow()
+    + CloseWindow()
+}
+
+class TGTab {
+    - TList* fTabList
+    --
+    + AddTab(name)
+    + SetTab(id)
+}
+
+class TRootEmbeddedCanvas {
+    - TCanvas* fCanvas
+    --
+    + GetCanvas()
+}
+
+TGMainFrame <|-- OzoneGUI
+TGMainFrame <|-- O3ViewerGUI
+OzoneGUI *-- TGTab : contains
+OzoneGUI *-- TRootEmbeddedCanvas : contains
+O3ViewerGUI *-- TRootEmbeddedCanvas : contains
+OzoneGUI --> O3ViewerGUI : embeds
+
+note right of OzoneGUI
+  Main GUI container with
+  5 tabs: Welcome, Processor,
+  Graph Viewer, Macro Runner,
+  and View O3 Global
+end note
+
+note right of O3ViewerGUI
+  Embedded in the
+  View O3 Global tab
+  for global analysis
+end note
+
+@enduml
+
+@startuml Ozone_GUI_Data_Flow
+!theme cerulean-outline
+skinparam backgroundColor #F5F5F5
+
+title Data Flow Diagram
+
+database "NASA Raw Data\nDirectory" as RawData #LightBlue
+file "optimized_ozone_processor\nExecutable" as Processor #Salmon
+folder "Processed Data\nskim_* folders" as ProcessedData #Orange
+file "ROOT Files\n*_global.root" as RootFiles #Plum
+
+component "Graph Viewer" as Viewer #LightGreen {
+    [Browse Folders]
+    [Load Graphs]
+    [Display Canvas]
+}
+
+component "Macro Runner" as Macro #Orange {
+    [Select Macro]
+    [Run Analysis]
+    [View Results]
+}
+
+component "View O3 Global" as Global #Plum {
+    [Load Data]
+    [Visualize]
+    [Export]
+}
+
+file "Exported Data\n.txt files" as ExportedData #LightGreen
+
+RawData --> Processor : input
+Processor --> ProcessedData : generates
+ProcessedData --> RootFiles : contains
+RootFiles --> Viewer : reads
+RootFiles --> Macro : reads
+RootFiles --> Global : reads
+Global --> ExportedData : exports
+
+@enduml

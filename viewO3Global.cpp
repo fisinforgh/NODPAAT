@@ -92,31 +92,29 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   // Main vertical frame
   TGVerticalFrame *vframe = new TGVerticalFrame(this, w, h);
 
-  // Control panel frame
-  TGHorizontalFrame *controlFrame = new TGHorizontalFrame(vframe, w, 150);
+  // Control panel frame - better organized
+  TGHorizontalFrame *controlFrame = new TGHorizontalFrame(vframe, w, 180);
 
-  // Left control panel
-  TGVerticalFrame *leftControl = new TGVerticalFrame(controlFrame, w / 2, 150);
+  // ========== LEFT PANEL: Data Selection ==========
+  TGGroupFrame *selectionGroup = new TGGroupFrame(controlFrame, "Data Selection", kVerticalFrame);
+  selectionGroup->SetTitlePos(TGGroupFrame::kLeft);
 
   // Location selection
-  TGHorizontalFrame *locFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
+  TGHorizontalFrame *locFrame = new TGHorizontalFrame(selectionGroup, 300, 30);
   TGLabel *locLabel = new TGLabel(locFrame, "Location:");
-  locFrame->AddFrame(
-      locLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+  locLabel->SetWidth(70);
+  locFrame->AddFrame(locLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 10, 5, 5));
   fLocationCombo = new TGComboBox(locFrame, 99);
-  fLocationCombo->Resize(200, 20);
-  fLocationCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this,
-                          "OnLocationSelected()");
-  locFrame->AddFrame(fLocationCombo,
-                     new TGLayoutHints(kLHintsLeft, 5, 5, 5, 5));
-  leftControl->AddFrame(
-      locFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+  fLocationCombo->Resize(200, 22);
+  fLocationCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this, "OnLocationSelected()");
+  locFrame->AddFrame(fLocationCombo, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+  selectionGroup->AddFrame(locFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 5, 5, 5, 2));
 
   // Category selection
-  TGHorizontalFrame *catFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
+  TGHorizontalFrame *catFrame = new TGHorizontalFrame(selectionGroup, 300, 30);
   TGLabel *catLabel = new TGLabel(catFrame, "Category:");
-  catFrame->AddFrame(
-      catLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+  catLabel->SetWidth(70);
+  catFrame->AddFrame(catLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 10, 5, 5));
   fCategoryCombo = new TGComboBox(catFrame, 100);
   fCategoryCombo->AddEntry("Analysis graphs", 0);
   fCategoryCombo->AddEntry("Form Factor", 1);
@@ -125,133 +123,125 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fCategoryCombo->AddEntry("O3 Teo Error", 4);
   fCategoryCombo->AddEntry("Individual Graphs", 5);
   fCategoryCombo->AddEntry("Superposition (History + Teo)", 6);
-  fCategoryCombo->Resize(200, 20);
+  fCategoryCombo->Resize(200, 22);
   fCategoryCombo->Select(0);
-  fCategoryCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this,
-                          "OnCategorySelected()");
-  catFrame->AddFrame(fCategoryCombo,
-                     new TGLayoutHints(kLHintsLeft, 5, 5, 5, 5));
-  leftControl->AddFrame(
-      catFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+  fCategoryCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this, "OnCategorySelected()");
+  catFrame->AddFrame(fCategoryCombo, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+  selectionGroup->AddFrame(catFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 5, 5, 2, 2));
 
   // Year selection
-  TGHorizontalFrame *yearFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
+  TGHorizontalFrame *yearFrame = new TGHorizontalFrame(selectionGroup, 300, 30);
   TGLabel *yearLabel = new TGLabel(yearFrame, "Year:");
-  yearFrame->AddFrame(
-      yearLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+  yearLabel->SetWidth(70);
+  yearFrame->AddFrame(yearLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 10, 5, 5));
   fYearCombo = new TGComboBox(yearFrame, 101);
-  fYearCombo->Resize(200, 20);
-  fYearCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this,
-                      "OnYearSelected()");
-  yearFrame->AddFrame(fYearCombo, new TGLayoutHints(kLHintsLeft, 5, 5, 5, 5));
-  leftControl->AddFrame(
-      yearFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+  fYearCombo->Resize(200, 22);
+  fYearCombo->Connect("Selected(Int_t)", "O3ViewerGUI", this, "OnYearSelected()");
+  yearFrame->AddFrame(fYearCombo, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+  selectionGroup->AddFrame(yearFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 5, 5, 2, 2));
 
   // Graph selection
-  TGHorizontalFrame *graphFrame = new TGHorizontalFrame(leftControl, w / 2, 30);
+  TGHorizontalFrame *graphFrame = new TGHorizontalFrame(selectionGroup, 300, 30);
   TGLabel *graphLabel = new TGLabel(graphFrame, "Graph:");
-  graphFrame->AddFrame(
-      graphLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 5, 5));
+  graphLabel->SetWidth(70);
+  graphFrame->AddFrame(graphLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 10, 5, 5));
   fGraphCombo = new TGComboBox(graphFrame, 102);
-  fGraphCombo->Resize(200, 20);
-  graphFrame->AddFrame(fGraphCombo, new TGLayoutHints(kLHintsLeft, 5, 5, 5, 5));
-  leftControl->AddFrame(
-      graphFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+  fGraphCombo->Resize(200, 22);
+  graphFrame->AddFrame(fGraphCombo, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+  selectionGroup->AddFrame(graphFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 5, 5, 2, 5));
 
-  controlFrame->AddFrame(
-      leftControl, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 2, 2, 2, 2));
+  controlFrame->AddFrame(selectionGroup, new TGLayoutHints(kLHintsLeft | kLHintsExpandY, 5, 5, 5, 5));
 
-  // Right control panel - Buttons
-  TGVerticalFrame *rightControl = new TGVerticalFrame(controlFrame, w / 2, 150);
+  // ========== CENTER PANEL: Display Options ==========
+  TGGroupFrame *displayGroup = new TGGroupFrame(controlFrame, "Display Options", kVerticalFrame);
+  displayGroup->SetTitlePos(TGGroupFrame::kLeft);
 
   // Multi-year checkbox
-  fMultiYearCheck = new TGCheckButton(rightControl, "Show All Years Panel");
-  fMultiYearCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
-                           "OnMultiYearToggled()");
-  rightControl->AddFrame(
-      fMultiYearCheck,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  fMultiYearCheck = new TGCheckButton(displayGroup, "Show All Years Panel");
+  fMultiYearCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this, "OnMultiYearToggled()");
+  displayGroup->AddFrame(fMultiYearCheck, new TGLayoutHints(kLHintsLeft, 10, 5, 8, 5));
 
-  // Color selection for superposition
-  TGLabel *colorTitle = new TGLabel(rightControl, "Superposition Colors:");
-  rightControl->AddFrame(
-      colorTitle, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 2));
+  // Superposition section
+  TGLabel *superTitle = new TGLabel(displayGroup, "Superposition Settings:");
+  TGFont *boldFont = gClient->GetFont("-*-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*");
+  if (boldFont) superTitle->SetTextFont(boldFont);
+  displayGroup->AddFrame(superTitle, new TGLayoutHints(kLHintsLeft, 10, 5, 8, 5));
 
-  TGHorizontalFrame *colorFrame = new TGHorizontalFrame(rightControl, 200, 40);
+  // Color selection - horizontal layout
+  TGHorizontalFrame *colorFrame = new TGHorizontalFrame(displayGroup, 250, 50);
 
-  TGVerticalFrame *histFrame = new TGVerticalFrame(colorFrame, 80, 40);
+  // History color
+  TGVerticalFrame *histFrame = new TGVerticalFrame(colorFrame, 100, 50);
   TGLabel *histColorLabel = new TGLabel(histFrame, "History O3");
-  histFrame->AddFrame(histColorLabel,
-                      new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  histFrame->AddFrame(histColorLabel, new TGLayoutHints(kLHintsCenterX, 2, 2, 3, 2));
   fHistoryColorSelect = new TGColorSelect(histFrame, kBlue, 300);
-  fHistoryColorSelect->Resize(60, 20);
-  fHistoryColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this,
-                               "OnHistoryColorSelected()");
-  histFrame->AddFrame(fHistoryColorSelect,
-                      new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
-  colorFrame->AddFrame(histFrame, new TGLayoutHints(kLHintsLeft, 5, 5, 2, 2));
+  fHistoryColorSelect->Resize(70, 22);
+  fHistoryColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this, "OnHistoryColorSelected()");
+  histFrame->AddFrame(fHistoryColorSelect, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 3));
+  colorFrame->AddFrame(histFrame, new TGLayoutHints(kLHintsLeft, 5, 10, 2, 2));
 
-  TGVerticalFrame *teoFrame = new TGVerticalFrame(colorFrame, 80, 40);
+  // Teo color
+  TGVerticalFrame *teoFrame = new TGVerticalFrame(colorFrame, 100, 50);
   TGLabel *teoColorLabel = new TGLabel(teoFrame, "O3 Teo");
-  teoFrame->AddFrame(teoColorLabel,
-                     new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
+  teoFrame->AddFrame(teoColorLabel, new TGLayoutHints(kLHintsCenterX, 2, 2, 3, 2));
   fTeoColorSelect = new TGColorSelect(teoFrame, kRed, 301);
-  fTeoColorSelect->Resize(60, 20);
-  fTeoColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this,
-                           "OnTeoColorSelected()");
-  teoFrame->AddFrame(fTeoColorSelect,
-                     new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 2));
-  colorFrame->AddFrame(teoFrame, new TGLayoutHints(kLHintsLeft, 5, 5, 2, 2));
+  fTeoColorSelect->Resize(70, 22);
+  fTeoColorSelect->Connect("ColorSelected(Pixel_t)", "O3ViewerGUI", this, "OnTeoColorSelected()");
+  teoFrame->AddFrame(fTeoColorSelect, new TGLayoutHints(kLHintsCenterX, 2, 2, 2, 3));
+  colorFrame->AddFrame(teoFrame, new TGLayoutHints(kLHintsLeft, 10, 5, 2, 2));
 
-  rightControl->AddFrame(
-      colorFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 2, 5));
-  fConnectHistoryCheck =
-      new TGCheckButton(rightControl, "Connect History Lines");
-  fConnectHistoryCheck->SetOn(kTRUE); // Default: connected
-  fConnectHistoryCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
-                                "OnConnectHistoryToggled()");
-  rightControl->AddFrame(
-      fConnectHistoryCheck,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
-  fConnectTeoCheck = new TGCheckButton(rightControl, "Connect Teo Lines");
-  fConnectTeoCheck->SetOn(kTRUE); // Default: connected
-  fConnectTeoCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this,
-                            "OnConnectTeoToggled()");
-  rightControl->AddFrame(
-      fConnectTeoCheck,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
-  fLoadButton = new TGTextButton(rightControl, "&Load Graph", 200);
+  displayGroup->AddFrame(colorFrame, new TGLayoutHints(kLHintsLeft, 5, 5, 2, 5));
+
+  // Connect lines checkboxes
+  fConnectHistoryCheck = new TGCheckButton(displayGroup, "Connect History Lines");
+  fConnectHistoryCheck->SetOn(kTRUE);
+  fConnectHistoryCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this, "OnConnectHistoryToggled()");
+  displayGroup->AddFrame(fConnectHistoryCheck, new TGLayoutHints(kLHintsLeft, 10, 5, 3, 2));
+
+  fConnectTeoCheck = new TGCheckButton(displayGroup, "Connect Teo Lines");
+  fConnectTeoCheck->SetOn(kTRUE);
+  fConnectTeoCheck->Connect("Toggled(Bool_t)", "O3ViewerGUI", this, "OnConnectTeoToggled()");
+  displayGroup->AddFrame(fConnectTeoCheck, new TGLayoutHints(kLHintsLeft, 10, 5, 2, 5));
+
+  controlFrame->AddFrame(displayGroup, new TGLayoutHints(kLHintsLeft | kLHintsExpandY, 5, 5, 5, 5));
+
+  // ========== RIGHT PANEL: Actions ==========
+  TGGroupFrame *actionsGroup = new TGGroupFrame(controlFrame, "Actions", kVerticalFrame);
+  actionsGroup->SetTitlePos(TGGroupFrame::kLeft);
+
+  // Load button
+  fLoadButton = new TGTextButton(actionsGroup, "&Load Graph", 200);
+  fLoadButton->SetHeight(28);
   fLoadButton->Connect("Clicked()", "O3ViewerGUI", this, "LoadGraph()");
-  rightControl->AddFrame(
-      fLoadButton, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  actionsGroup->AddFrame(fLoadButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 8, 5));
 
-  fExportAllYearsCheck = new TGCheckButton(rightControl, "Export All Years");
-  fExportAllYearsCheck->SetOn(kFALSE); // Default: single year
-  rightControl->AddFrame(
-      fExportAllYearsCheck,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  // Export section
+  TGLabel *exportTitle = new TGLabel(actionsGroup, "Export Data:");
+  if (boldFont) exportTitle->SetTextFont(boldFont);
+  actionsGroup->AddFrame(exportTitle, new TGLayoutHints(kLHintsLeft, 10, 5, 8, 3));
 
-  fExportButton = new TGTextButton(rightControl, "&Export Data", 202);
+  fExportAllYearsCheck = new TGCheckButton(actionsGroup, "Export All Years");
+  fExportAllYearsCheck->SetOn(kFALSE);
+  actionsGroup->AddFrame(fExportAllYearsCheck, new TGLayoutHints(kLHintsLeft, 10, 5, 3, 3));
+
+  fExportButton = new TGTextButton(actionsGroup, "&Export Data", 202);
+  fExportButton->SetHeight(28);
   fExportButton->Connect("Clicked()", "O3ViewerGUI", this, "ExportData()");
-  rightControl->AddFrame(
-      fExportButton,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  actionsGroup->AddFrame(fExportButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 3, 5));
 
-  fExitButton = new TGTextButton(rightControl, "&Exit", 201);
+  // Exit button
+  fExitButton = new TGTextButton(actionsGroup, "&Exit", 201);
+  fExitButton->SetHeight(28);
   fExitButton->Connect("Clicked()", "O3ViewerGUI", this, "CloseWindow()");
-  rightControl->AddFrame(
-      fExitButton, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 5, 5));
+  actionsGroup->AddFrame(fExitButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 8, 5));
 
-  fStatusLabel = new TGLabel(rightControl, "Ready");
-  rightControl->AddFrame(
-      fStatusLabel,
-      new TGLayoutHints(kLHintsCenterX | kLHintsTop, 5, 5, 10, 5));
+  // Status label
+  fStatusLabel = new TGLabel(actionsGroup, "Ready");
+  actionsGroup->AddFrame(fStatusLabel, new TGLayoutHints(kLHintsCenterX, 5, 5, 10, 8));
 
-  controlFrame->AddFrame(rightControl,
-                         new TGLayoutHints(kLHintsRight, 2, 2, 2, 2));
+  controlFrame->AddFrame(actionsGroup, new TGLayoutHints(kLHintsLeft | kLHintsExpandY, 5, 10, 5, 5));
 
-  vframe->AddFrame(controlFrame,
-                   new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 2));
+  vframe->AddFrame(controlFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 5, 5, 5, 5));
 
   // Embedded canvas
   fEmbCanvas = new TRootEmbeddedCanvas("EmbCanvas", vframe, w - 10, h - 160);
