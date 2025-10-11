@@ -2,7 +2,7 @@
 root -b -q statsMacroChi2LRSO3Sn.C\(10,1,3\)
 
 ./grid_analysis 4 10 1.0
-rootj-b -q statsMacroChi2LRSO3Sn.C\(10,1,4\)
+root -b -q statsMacroChi2LRSO3Sn.C\(10,1,4\)
 
 ./grid_analysis 5 10 1.0
 root -b -q statsMacroChi2LRSO3Sn.C\(10,1,5\)

@@ -37,3 +37,6 @@ To execute chi2LRSO3vsSnRunApp run the .sh file
 ```bash
  ./bulkChi2LRSO3vsSnRunApp.sh 7 10 1.1
 ```
+
+```cpp
+g++ -o grid_analysis analysis_runner.cpp -std=c++11 -pthread
