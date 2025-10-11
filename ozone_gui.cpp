@@ -6,11 +6,14 @@
 #include <TGComboBox.h>
 #include <TGDoubleSlider.h>
 #include <TGFileDialog.h>
+#include <TGFont.h>
 #include <TGFrame.h>
+#include <TGIcon.h>
 #include <TGLabel.h>
 #include <TGListBox.h>
 #include <TGMsgBox.h>
 #include <TGNumberEntry.h>
+#include <TGPicture.h>
 #include <TGTab.h>
 #include <TGTextEntry.h>
 #include <TGTextView.h>
@@ -18,16 +21,13 @@
 #include <TGraph2D.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TImage.h>
 #include <TKey.h>
 #include <TList.h>
 #include <TRegexp.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TSystem.h>
 #include <TTimer.h>
-#include <TImage.h>
-#include <TGPicture.h>
-#include <TGIcon.h>
-#include <TGFont.h>
 #include <chrono>
 #include <ctime>
 #include <dirent.h>
@@ -197,21 +197,29 @@ public:
     // -------- Title Section (First) --------
     TGVerticalFrame *titleFrame = new TGVerticalFrame(mainFrame);
 
-    TGLabel *programTitle = new TGLabel(titleFrame, "Ozone Processor - Graphical Interface");
-    TGFont *progFont = gClient->GetFont("-*-helvetica-bold-r-*-*-20-*-*-*-*-*-*-*");
+    TGLabel *programTitle =
+        new TGLabel(titleFrame, "Ozone Processor - Graphical Interface");
+    TGFont *progFont =
+        gClient->GetFont("-*-helvetica-bold-r-*-*-20-*-*-*-*-*-*-*");
     if (progFont) {
       programTitle->SetTextFont(progFont);
     }
-    titleFrame->AddFrame(programTitle, new TGLayoutHints(kLHintsCenterX, 10, 10, 20, 5));
+    titleFrame->AddFrame(programTitle,
+                         new TGLayoutHints(kLHintsCenterX, 10, 10, 20, 5));
 
-    TGLabel *subtitle = new TGLabel(titleFrame, "NASA Ozone Data Processing and Analysis Tool");
-    TGFont *subFont = gClient->GetFont("-*-helvetica-medium-r-*-*-14-*-*-*-*-*-*-*");
+    TGLabel *subtitle =
+        new TGLabel(titleFrame, "NASA Ozone Data Processing and Analysis Tool");
+    TGFont *subFont =
+        gClient->GetFont("-*-helvetica-medium-r-*-*-14-*-*-*-*-*-*-*");
     if (subFont) {
       subtitle->SetTextFont(subFont);
     }
-    titleFrame->AddFrame(subtitle, new TGLayoutHints(kLHintsCenterX, 10, 10, 5, 15));
+    titleFrame->AddFrame(subtitle,
+                         new TGLayoutHints(kLHintsCenterX, 10, 10, 5, 15));
 
-    mainFrame->AddFrame(titleFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 10, 5));
+    mainFrame->AddFrame(
+        titleFrame,
+        new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 10, 5));
 
     // -------- Logo Section (Below Title) --------
     TGVerticalFrame *logoFrame = new TGVerticalFrame(mainFrame, 150, 150);
@@ -232,25 +240,34 @@ public:
 
       // Calculate scaled dimensions maintaining aspect ratio
       if (logoWidth > maxSize || logoHeight > maxSize) {
-        Float_t scale = TMath::Min((Float_t)maxSize/logoWidth, (Float_t)maxSize/logoHeight);
+        Float_t scale = TMath::Min((Float_t)maxSize / logoWidth,
+                                   (Float_t)maxSize / logoHeight);
         logoWidth = (UInt_t)(logoWidth * scale);
         logoHeight = (UInt_t)(logoHeight * scale);
       }
 
       TGIcon *logoIcon = new TGIcon(logoFrame, logoPic, logoWidth, logoHeight);
-      logoFrame->AddFrame(logoIcon, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 5, 5));
+      logoFrame->AddFrame(
+          logoIcon,
+          new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 5, 5));
     } else {
       // If logo not found, display university name
-      TGLabel *uniLabel = new TGLabel(logoFrame, "Universidad Distrital\nFrancisco Jose de Caldas");
+      TGLabel *uniLabel = new TGLabel(
+          logoFrame, "Universidad Distrital\nFrancisco Jose de Caldas");
       uniLabel->SetTextJustify(kTextCenterX);
-      TGFont *uniFont = gClient->GetFont("-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*");
+      TGFont *uniFont =
+          gClient->GetFont("-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*");
       if (uniFont) {
         uniLabel->SetTextFont(uniFont);
       }
-      logoFrame->AddFrame(uniLabel, new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 20, 20));
+      logoFrame->AddFrame(
+          uniLabel,
+          new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 20, 20));
     }
 
-    mainFrame->AddFrame(logoFrame, new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 5, 10));
+    mainFrame->AddFrame(
+        logoFrame,
+        new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 5, 10));
 
     // -------- Program Description --------
     TGGroupFrame *descFrame = new TGGroupFrame(mainFrame, "Program Overview");
@@ -258,7 +275,8 @@ public:
 
     descText->AddLine("OVERVIEW");
     descText->AddLine("--------");
-    descText->AddLine("This application provides a comprehensive interface for processing and analyzing");
+    descText->AddLine("This application provides a comprehensive interface for "
+                      "processing and analyzing");
     descText->AddLine("NASA ozone data from satellite measurements.");
     descText->AddLine("");
     descText->AddLine("");
@@ -269,11 +287,14 @@ public:
     descText->AddLine("      Process ozone data using optimized algorithms");
     descText->AddLine("");
     descText->AddLine("      Execution Modes:");
-    descText->AddLine("      • pgrid     - Process data for a latitude range grid");
-    descText->AddLine("      • location  - Process data for a specific location");
+    descText->AddLine(
+        "      • pgrid     - Process data for a latitude range grid");
+    descText->AddLine(
+        "      • location  - Process data for a specific location");
     descText->AddLine("");
     descText->AddLine("      Features:");
-    descText->AddLine("      • Configurable parameters (grid size, events, threads)");
+    descText->AddLine(
+        "      • Configurable parameters (grid size, events, threads)");
     descText->AddLine("      • Real-time process monitoring with log output");
     descText->AddLine("      • Silent mode for improved performance");
     descText->AddLine("      • Desktop notifications on completion");
@@ -283,18 +304,22 @@ public:
     descText->AddLine("      Browse and visualize processed ozone data");
     descText->AddLine("");
     descText->AddLine("      Features:");
-    descText->AddLine("      • Navigate through skim folders organized by coordinates");
+    descText->AddLine(
+        "      • Navigate through skim folders organized by coordinates");
     descText->AddLine("      • Automatic graph loading and display");
     descText->AddLine("      • Filter folders by name for quick access");
-    descText->AddLine("      • Display multiple graphs and histograms simultaneously");
+    descText->AddLine(
+        "      • Display multiple graphs and histograms simultaneously");
     descText->AddLine("");
     descText->AddLine("");
     descText->AddLine("[ 3 ] MACRO RUNNER TAB");
     descText->AddLine("      Execute ROOT macros for advanced analysis");
     descText->AddLine("");
     descText->AddLine("      Available Macros:");
-    descText->AddLine("      • linearRelStudyO3vsSn.C    - Linear relation studies between O3 and Sn");
-    descText->AddLine("      • macroO3teoGlobalHttp.C    - Global O3 theoretical analysis");
+    descText->AddLine("      • linearRelStudyO3vsSn.C    - Linear relation "
+                      "studies between O3 and Sn");
+    descText->AddLine(
+        "      • macroO3teoGlobalHttp.C    - Global O3 theoretical analysis");
     descText->AddLine("");
     descText->AddLine("      Features:");
     descText->AddLine("      • Dynamic parameter configuration");
@@ -305,8 +330,10 @@ public:
     descText->AddLine("      Visualize global ozone data from the ana schema");
     descText->AddLine("");
     descText->AddLine("      Features:");
-    descText->AddLine("      • Download historical data (O3 history and O3 theoretical)");
-    descText->AddLine("      • Interactive graphs with customizable display options");
+    descText->AddLine(
+        "      • Download historical data (O3 history and O3 theoretical)");
+    descText->AddLine(
+        "      • Interactive graphs with customizable display options");
     descText->AddLine("      • Global ozone trend analysis");
     descText->AddLine("");
     descText->AddLine("");
@@ -319,15 +346,25 @@ public:
     descText->AddLine("  4. Explore global trends in View O3 Global tab");
     descText->AddLine("");
     descText->AddLine("");
-    descText->AddLine("-----------------------------------------------------------------------------");
-    descText->AddLine("Developed at Universidad Distrital Francisco Jose de Caldas");
-    descText->AddLine("For research on atmospheric ozone measurements and analysis");
-    descText->AddLine("-----------------------------------------------------------------------------");
+    descText->AddLine("--------------------------------------------------------"
+                      "---------------------");
+    descText->AddLine(
+        "Developed at Universidad Distrital Francisco Jose de Caldas");
+    descText->AddLine(
+        "For research on atmospheric ozone measurements and analysis");
+    descText->AddLine("--------------------------------------------------------"
+                      "---------------------");
 
-    descFrame->AddFrame(descText, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 10, 10));
-    mainFrame->AddFrame(descFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 20, 20, 10, 20));
+    descFrame->AddFrame(
+        descText,
+        new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 10, 10));
+    mainFrame->AddFrame(
+        descFrame,
+        new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 20, 20, 10, 20));
 
-    parent->AddFrame(mainFrame, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
+    parent->AddFrame(
+        mainFrame,
+        new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5));
   }
 
   void CreateProcessorInterface(TGCompositeFrame *parent) {
@@ -698,7 +735,7 @@ public:
         new TGLayoutHints(kLHintsRight | kLHintsCenterY | kLHintsExpandX, 5, 15,
                           5, 5));
     fMacroParam3 =
-        new TGNumberEntry(paramMatrix, -74.08, 8, -1, TGNumberFormat::kNESReal,
+        new TGNumberEntry(paramMatrix, 1, 8, -1, TGNumberFormat::kNESReal,
                           TGNumberFormat::kNEAAnyNumber,
                           TGNumberFormat::kNELLimitMinMax, -180.0, 180.0);
     fMacroParam3->Resize(80, kWidgetHeight); // Smaller input
@@ -896,7 +933,7 @@ public:
       fMacroParam1->SetFormat(TGNumberFormat::kNESInteger,
                               TGNumberFormat::kNEANonNegative);
       fMacroParam1->SetLimits(TGNumberFormat::kNELLimitMinMax, 0, 100000);
-      fMacroParam1->SetIntNumber(10); // default integer
+      fMacroParam1->SetIntNumber(7); // default integer
       setParamVisibility(fParam1Label, fMacroParam1, kTRUE,
                          "Minimum number of events");
       setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
@@ -921,7 +958,7 @@ public:
       fMacroParam3->SetFormat(TGNumberFormat::kNESReal,
                               TGNumberFormat::kNEAAnyNumber);
       fMacroParam3->SetLimits(TGNumberFormat::kNELLimitMinMax, -180.0, 180.0);
-      fMacroParam3->SetNumber(151.21);
+      fMacroParam3->SetNumber(-74.08);
       // Solar cycle period (int)
       fMacroParam4->SetFormat(TGNumberFormat::kNESInteger,
                               TGNumberFormat::kNEAPositive);
@@ -931,37 +968,37 @@ public:
       fMacroParam5->SetFormat(TGNumberFormat::kNESInteger,
                               TGNumberFormat::kNEAPositive);
       fMacroParam5->SetLimits(TGNumberFormat::kNELLimitMinMax, 0, 1);
-      fMacroParam5->SetNumber(0);
+      fMacroParam5->SetNumber(1);
       // Minimum ozone plot range (float)
       fMacroParam6->SetFormat(TGNumberFormat::kNESReal,
                               TGNumberFormat::kNEAAnyNumber);
       fMacroParam6->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 600.0);
-      fMacroParam6->SetNumber(0.0);
+      fMacroParam6->SetNumber(195);
       // Maximum ozone plot range (float)
       fMacroParam7->SetFormat(TGNumberFormat::kNESReal,
                               TGNumberFormat::kNEAAnyNumber);
       fMacroParam7->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 600.0);
-      fMacroParam7->SetNumber(600.0);
+      fMacroParam7->SetNumber(345);
       // Minimum form factor range (float)
       fMacroParam8->SetFormat(TGNumberFormat::kNESReal,
                               TGNumberFormat::kNEAAnyNumber);
       fMacroParam8->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
-      fMacroParam8->SetNumber(0.0);
+      fMacroParam8->SetNumber(0.91);
       // Maximum form factor range (float)
       fMacroParam9->SetFormat(TGNumberFormat::kNESReal,
                               TGNumberFormat::kNEAAnyNumber);
       fMacroParam9->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 10.0);
-      fMacroParam9->SetNumber(10.0);
+      fMacroParam9->SetNumber(1.27);
       // Minimum error plot range (float)
       fMacroParam10->SetFormat(TGNumberFormat::kNESReal,
                                TGNumberFormat::kNEAAnyNumber);
       fMacroParam10->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 100.0);
-      fMacroParam10->SetNumber(0.0);
+      fMacroParam10->SetNumber(-0.03);
       // Maximum error plot range (float)
       fMacroParam11->SetFormat(TGNumberFormat::kNESReal,
                                TGNumberFormat::kNEAAnyNumber);
       fMacroParam11->SetLimits(TGNumberFormat::kNELLimitMinMax, 0.0, 100.0);
-      fMacroParam11->SetNumber(100.0);
+      fMacroParam11->SetNumber(0.32);
       setParamVisibility(fParam1Label, fMacroParam1, kTRUE, "Latitude");
       setParamVisibility(fParam2Label, fMacroParam2, kTRUE, "Location prefix");
       setParamVisibility(fParam3Label, fMacroParam3, kTRUE, "Longitude");
@@ -1710,11 +1747,12 @@ public:
       double param8 = fMacroParam8->GetNumber();
       double param9 = fMacroParam9->GetNumber();
       double param10 = fMacroParam10->GetNumber();
+      double param11 = fMacroParam11->GetNumber();
       rootCmd =
           Form("root -l -b -q "
-               "'macroO3teoGlobalHttp.C(%g,%g,\"%s\",%d,%d,%d,%d,%g,%g,%g)'",
+               "'macroO3teoGlobalHttp.C(%g,%g,\"%s\",%d,%d,%d,%d,%g,%g,%g,%g)'",
                lat, lon, loc.Data(), param4, param5, param6, param7, param8,
-               param9, param10);
+               param9, param10, param11);
     } else {
       AppendMacroLog("Error: Unknown macro selected.");
       return;

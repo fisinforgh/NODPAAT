@@ -93,6 +93,9 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
   } else if (optLinear == 1) {
     inFitLinear.open(fitLinearName);
 
+    // reads 8 lines to take the next three values of
+    // the second row neccesary for chi value:
+    inFitLinear >> datLinear;
     inFitLinear >> datLinear;
     inFitLinear >> datLinear;
     inFitLinear >> datLinear;
