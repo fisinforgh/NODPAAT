@@ -131,13 +131,13 @@ public:
     // Move all existing processor UI to this tab
     CreateProcessorInterface(processorTab);
 
-    // ======== GRAPH VIEWER TAB ========
-    TGCompositeFrame *graphTab = fMainTabs->AddTab("Graph Viewer");
-    CreateGraphInterface(graphTab);
-
     // ======== MACRO RUNNER TAB ========
     TGCompositeFrame *macroTab = fMainTabs->AddTab("Macro Runner");
     CreateMacroInterface(macroTab);
+
+    // ======== GRAPH VIEWER TAB ========
+    TGCompositeFrame *graphTab = fMainTabs->AddTab("Graph Viewer");
+    CreateGraphInterface(graphTab);
 
     // ============================================================================
     // View O3 Global Tab Integration
