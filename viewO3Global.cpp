@@ -31,6 +31,7 @@ private:
   TGTextButton *fRefreshButton;
   TGTextButton *fExitButton;
   TGTextButton *fExportButton;
+  TGTextButton *fSaveGraphButton;
   TGCheckButton *fMultiYearCheck;
   TGColorSelect *fHistoryColorSelect;
   TGColorSelect *fTeoColorSelect;
@@ -71,6 +72,7 @@ public:
   void OnConnectTeoToggled();
   void ExportData();
   void RefreshData();
+  void SaveGraph();
 
   ClassDef(O3ViewerGUI, 0)
 };
@@ -222,6 +224,12 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
   fRefreshButton->SetHeight(28);
   fRefreshButton->Connect("Clicked()", "O3ViewerGUI", this, "RefreshData()");
   actionsGroup->AddFrame(fRefreshButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 5, 5));
+
+  // Save Graph button
+  fSaveGraphButton = new TGTextButton(actionsGroup, "&Save Graph", 204);
+  fSaveGraphButton->SetHeight(28);
+  fSaveGraphButton->Connect("Clicked()", "O3ViewerGUI", this, "SaveGraph()");
+  actionsGroup->AddFrame(fSaveGraphButton, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX, 10, 10, 5, 5));
 
   // Export section
   TGLabel *exportTitle = new TGLabel(actionsGroup, "Export Data:");
@@ -1578,6 +1586,119 @@ void O3ViewerGUI::RefreshData() {
   ScanLocations();
 
   fStatusLabel->SetText("Locations refreshed!");
+}
+
+void O3ViewerGUI::SaveGraph() {
+  TCanvas *canvas = fEmbCanvas->GetCanvas();
+
+  if (!canvas) {
+    fStatusLabel->SetText("Error: No canvas to save!");
+    return;
+  }
+
+  // Check if there's anything drawn on the canvas
+  if (!canvas->GetListOfPrimitives() || canvas->GetListOfPrimitives()->GetSize() == 0) {
+    fStatusLabel->SetText("Error: No graph loaded to save!");
+    return;
+  }
+
+  // Get location name
+  TGTextLBEntry *locEntry = (TGTextLBEntry *)fLocationCombo->GetSelectedEntry();
+  if (!locEntry) {
+    fStatusLabel->SetText("Error: No location selected!");
+    return;
+  }
+  TString locName = locEntry->GetText()->GetString();
+
+  // Build filename based on current selection
+  TString baseFilename;
+  Int_t catId = fCategoryCombo->GetSelected();
+
+  if (catId == 0) {
+    // Analysis graphs
+    TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+    if (graphEntry) {
+      TString graphName = graphEntry->GetText()->GetString();
+      baseFilename = Form("%s_ana_%s", locName.Data(), graphName.Data());
+    } else {
+      baseFilename = Form("%s_ana", locName.Data());
+    }
+  } else if (catId == 6) {
+    // Superposition
+    TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+    TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+
+    if (fMultiYearCheck->IsOn()) {
+      // Multi-year panel
+      if (graphEntry) {
+        TString graphName = graphEntry->GetText()->GetString();
+        baseFilename = Form("%s_superposition_%s_AllYears", locName.Data(), graphName.Data());
+      } else {
+        baseFilename = Form("%s_superposition_AllYears", locName.Data());
+      }
+    } else {
+      // Single year
+      if (yearEntry && graphEntry) {
+        TString year = yearEntry->GetText()->GetString();
+        TString graphName = graphEntry->GetText()->GetString();
+        baseFilename = Form("%s_superposition_%s_year%s", locName.Data(), graphName.Data(), year.Data());
+      } else {
+        baseFilename = Form("%s_superposition", locName.Data());
+      }
+    }
+  } else {
+    // Other categories (Form Factor, History O3, O3 Teo Study, etc.)
+    TString catNames[] = {"ana", "fm", "history", "comp", "error", "individual"};
+    TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
+    TGTextLBEntry *graphEntry = (TGTextLBEntry *)fGraphCombo->GetSelectedEntry();
+
+    if (fMultiYearCheck->IsOn()) {
+      // Multi-year panel
+      if (graphEntry) {
+        TString graphName = graphEntry->GetText()->GetString();
+        baseFilename = Form("%s_%s_%s_AllYears", locName.Data(), catNames[catId].Data(), graphName.Data());
+      } else {
+        baseFilename = Form("%s_%s_AllYears", locName.Data(), catNames[catId].Data());
+      }
+    } else {
+      // Single year
+      if (yearEntry && graphEntry) {
+        TString year = yearEntry->GetText()->GetString();
+        TString graphName = graphEntry->GetText()->GetString();
+        baseFilename = Form("%s_%s_%s_year%s", locName.Data(), catNames[catId].Data(), graphName.Data(), year.Data());
+      } else {
+        baseFilename = Form("%s_%s", locName.Data(), catNames[catId].Data());
+      }
+    }
+  }
+
+  // Replace spaces and special characters with underscores
+  baseFilename.ReplaceAll(" ", "_");
+  baseFilename.ReplaceAll("/", "_");
+  baseFilename.ReplaceAll("(", "");
+  baseFilename.ReplaceAll(")", "");
+
+  // Save in multiple formats
+  TString pngFile = baseFilename + ".png";
+  TString pdfFile = baseFilename + ".pdf";
+  TString rootFile = baseFilename + ".root";
+
+  canvas->SaveAs(pngFile.Data());
+  canvas->SaveAs(pdfFile.Data());
+  canvas->SaveAs(rootFile.Data());
+
+  fStatusLabel->SetText(Form("Saved: %s (.png, .pdf, .root)", baseFilename.Data()));
+
+  // Show success dialog
+  TString message = Form("Graph saved successfully:\n\n%s\n%s\n%s",
+                        pngFile.Data(), pdfFile.Data(), rootFile.Data());
+  new TGMsgBox(gClient->GetRoot(), this, "Success",
+               message.Data(), kMBIconAsterisk, kMBOk);
+
+  std::cout << "Graph saved to:" << std::endl;
+  std::cout << "  " << pngFile.Data() << std::endl;
+  std::cout << "  " << pdfFile.Data() << std::endl;
+  std::cout << "  " << rootFile.Data() << std::endl;
 }
 
 void O3ViewerGUI::CloseWindow() { gApplication->Terminate(0); }

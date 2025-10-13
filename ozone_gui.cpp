@@ -73,6 +73,7 @@ private:
   TGListBox *fFileListBox;
   TRootEmbeddedCanvas *fGraphCanvas;
   TGTextButton *fRefreshButton;
+  TGTextButton *fSaveGraphButton;
   TGLabel *fGraphInfoLabel;
   std::vector<TString> fCurrentFolders;
   std::vector<TString> fCurrentFiles;
@@ -569,6 +570,13 @@ public:
     fRefreshButton->Connect("Clicked()", "OzoneGUI", this,
                             "RefreshFolderList()");
     pathHFrame->AddFrame(fRefreshButton,
+                         new TGLayoutHints(kLHintsRight, 5, 5, 5, 5));
+
+    fSaveGraphButton = new TGTextButton(pathHFrame, "Save Graph");
+    fSaveGraphButton->Resize(100, 28);
+    fSaveGraphButton->Connect("Clicked()", "OzoneGUI", this,
+                              "SaveGraphFromViewer()");
+    pathHFrame->AddFrame(fSaveGraphButton,
                          new TGLayoutHints(kLHintsRight, 5, 5, 5, 5));
 
     pathFrame->AddFrame(pathHFrame,
@@ -1358,6 +1366,98 @@ public:
 
     canvas->Update();
     canvas->Modified();
+  }
+
+  void SaveGraphFromViewer() {
+    TCanvas *canvas = fGraphCanvas->GetCanvas();
+
+    if (!canvas) {
+      new TGMsgBox(gClient->GetRoot(), this, "Error",
+                   "No canvas to save!", kMBIconStop, kMBOk);
+      return;
+    }
+
+    // Check if there's anything drawn on the canvas
+    if (!canvas->GetListOfPrimitives() ||
+        canvas->GetListOfPrimitives()->GetSize() == 0) {
+      new TGMsgBox(gClient->GetRoot(), this, "Error",
+                   "No graph loaded to save!", kMBIconStop, kMBOk);
+      return;
+    }
+
+    // Get the current folder name from fGraphInfoLabel
+    TString infoText = fGraphInfoLabel->GetText()->GetString();
+
+    // Build filename from current selection
+    TString baseFilename;
+
+    // Try to extract folder name from the info label
+    if (infoText.Contains("Selected:")) {
+      // Extract the folder name between "Selected: " and the next space or parenthesis
+      TString folderName = infoText;
+      folderName.ReplaceAll("Selected: ", "");
+
+      // Remove lat/lon info if present
+      Ssiz_t parenPos = folderName.First('(');
+      if (parenPos != kNPOS) {
+        folderName = folderName(0, parenPos);
+      }
+      folderName = folderName.Strip(TString::kBoth);
+
+      baseFilename = folderName;
+    } else if (infoText.Contains("File:")) {
+      // Extract filename
+      TString fileName = infoText;
+      fileName.ReplaceAll("File: ", "");
+
+      // Get just the part before " - "
+      Ssiz_t dashPos = fileName.First('-');
+      if (dashPos != kNPOS) {
+        fileName = fileName(0, dashPos);
+      }
+      fileName = fileName.Strip(TString::kBoth);
+
+      // Remove .root extension
+      fileName.ReplaceAll(".root", "");
+
+      baseFilename = fileName;
+    } else {
+      // Default name
+      baseFilename = "graph_viewer_export";
+    }
+
+    // Add timestamp to make filename unique
+    TDatime now;
+    baseFilename += Form("_%d%02d%02d_%02d%02d%02d",
+                        now.GetYear(), now.GetMonth(), now.GetDay(),
+                        now.GetHour(), now.GetMinute(), now.GetSecond());
+
+    // Replace spaces and special characters with underscores
+    baseFilename.ReplaceAll(" ", "_");
+    baseFilename.ReplaceAll("/", "_");
+    baseFilename.ReplaceAll("(", "");
+    baseFilename.ReplaceAll(")", "");
+    baseFilename.ReplaceAll("°", "deg");
+
+    // Save in multiple formats
+    TString pngFile = baseFilename + ".png";
+    TString pdfFile = baseFilename + ".pdf";
+    TString rootFile = baseFilename + ".root";
+
+    canvas->SaveAs(pngFile.Data());
+    canvas->SaveAs(pdfFile.Data());
+    canvas->SaveAs(rootFile.Data());
+
+    // Show success message
+    TString message = Form("Graph saved successfully:\n\n%s\n%s\n%s",
+                          pngFile.Data(), pdfFile.Data(), rootFile.Data());
+    new TGMsgBox(gClient->GetRoot(), this, "Success",
+                 message.Data(), kMBIconAsterisk, kMBOk);
+
+    std::cout << "Graph saved to:" << std::endl;
+    std::cout << "  " << pngFile.Data() << std::endl;
+    std::cout << "  " << pdfFile.Data() << std::endl;
+    std::cout << "  " << rootFile.Data() << std::endl;
   }
 
   // ======== ORIGINAL PROCESSOR METHODS ========
