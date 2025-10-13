@@ -541,6 +541,7 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
       TCanvas *canvas = fEmbCanvas->GetCanvas();
       canvas->Clear();
       canvas->cd();
+      canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
       canvas->SetGrid();
 
       bool drawnFirst = false;
@@ -593,6 +594,7 @@ void O3ViewerGUI::OnConnectTeoToggled() {
       TCanvas *canvas = fEmbCanvas->GetCanvas();
       canvas->Clear();
       canvas->cd();
+      canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
       canvas->SetGrid();
 
       bool drawnFirst = false;
@@ -673,6 +675,7 @@ void O3ViewerGUI::OnTeoColorSelected() {
 void O3ViewerGUI::DrawObject(TObject *obj, const char *path) {
   TCanvas *canvas = fEmbCanvas->GetCanvas();
   canvas->cd();
+  canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
   canvas->SetGrid();
 
   if (obj->InheritsFrom("TGraph")) {
@@ -704,6 +707,7 @@ void O3ViewerGUI::LoadSuperposition() {
   TCanvas *canvas = fEmbCanvas->GetCanvas();
   canvas->Clear();
   canvas->cd();
+  canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
   canvas->SetGrid();
 
   TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
@@ -926,6 +930,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
     // Superposition mode - load both history and comp
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
+      gPad->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
       gPad->SetGrid();
 
       TString historyPath =
@@ -1022,6 +1027,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
 
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
+      gPad->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
       gPad->SetGrid();
 
       TString path;
@@ -1087,6 +1093,7 @@ void O3ViewerGUI::LoadGraph() {
   TCanvas *canvas = fEmbCanvas->GetCanvas();
   canvas->Clear();
   canvas->cd();
+  canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
 
   if (catId == 0) {
     TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");

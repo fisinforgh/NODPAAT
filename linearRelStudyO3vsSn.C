@@ -23,6 +23,78 @@ Double_t fitLinear(Double_t *x, Double_t *par) {
   return par[0] + par[1] * x[0];
 }
 
+// Helper function to calculate optimal Y-axis range for histograms
+void SetOptimalYRange(TH1 *hist, Double_t marginPercent = 0.1) {
+  if (!hist) return;
+
+  Int_t nbins = hist->GetNbinsX();
+  std::vector<Double_t> values;
+
+  // Collect non-zero values to filter out noise
+  for (Int_t i = 1; i <= nbins; i++) {
+    Double_t val = hist->GetBinContent(i);
+    if (val > 0.01) {
+      values.push_back(val);
+    }
+  }
+
+  if (values.empty()) return;
+
+  // Sort to find percentiles
+  std::sort(values.begin(), values.end());
+
+  // Use 5th and 95th percentiles to exclude outliers
+  Int_t idx5 = (Int_t)(values.size() * 0.05);
+  Int_t idx95 = (Int_t)(values.size() * 0.95);
+
+  Double_t minVal = values[idx5];
+  Double_t maxVal = values[idx95];
+
+  // Add margin for better visualization
+  Double_t range = maxVal - minVal;
+  Double_t margin = range * marginPercent;
+
+  hist->SetMinimum(minVal - margin);
+  hist->SetMaximum(maxVal + margin);
+}
+
+// Helper function to calculate optimal Y-axis range for graphs
+void SetOptimalYRange(TGraph *graph, Double_t marginPercent = 0.1) {
+  if (!graph || graph->GetN() == 0) return;
+
+  Int_t nPoints = graph->GetN();
+  Double_t *yVals = graph->GetY();
+
+  std::vector<Double_t> values;
+
+  // Collect non-zero values to filter out noise
+  for (Int_t i = 0; i < nPoints; i++) {
+    if (yVals[i] > 0.01) {
+      values.push_back(yVals[i]);
+    }
+  }
+
+  if (values.empty()) return;
+
+  // Sort to find percentiles
+  std::sort(values.begin(), values.end());
+
+  // Use 5th and 95th percentiles to exclude outliers
+  Int_t idx5 = (Int_t)(values.size() * 0.05);
+  Int_t idx95 = (Int_t)(values.size() * 0.95);
+
+  Double_t minVal = values[idx5];
+  Double_t maxVal = values[idx95];
+
+  // Add margin for better visualization
+  Double_t range = maxVal - minVal;
+  Double_t margin = range * marginPercent;
+
+  graph->SetMinimum(minVal - margin);
+  graph->SetMaximum(maxVal + margin);
+  graph->GetYaxis()->SetRangeUser(minVal - margin, maxVal + margin);
+}
+
 void linearRelStudyO3vsSn(Int_t nEvOffSet, const char preLoc[10],
                           double alpha) {
 
@@ -476,6 +548,9 @@ void linearRelStudyO3vsSn(Int_t nEvOffSet, const char preLoc[10],
   c1->cd(3)->SetGridx();
   c1->cd(3)->SetGridy();
   ud_vs_dd->Draw("P");
+  SetOptimalYRange(ud_vs_dd, 1.0);  // 100% margin for more breathing room
+  c1->cd(3)->Modified();
+  c1->cd(3)->Update();
 
   cout << "nUd: " << nUd << endl;
   cout << "nSn: " << nSn << endl;
@@ -488,6 +563,7 @@ void linearRelStudyO3vsSn(Int_t nEvOffSet, const char preLoc[10],
 
   TGraph *grSnUd = new TGraph(nSnSkim, snSkim, ud);
   grSnUd->SetTitle("o3 vs Sunspot Number");
+  SetOptimalYRange(grSnUd, 1.0);  // 100% margin for more breathing room
   c1->cd(4);
   c1->cd(4)->SetGridx();
   c1->cd(4)->SetGridy();
@@ -498,6 +574,7 @@ void linearRelStudyO3vsSn(Int_t nEvOffSet, const char preLoc[10],
 
   TGraph *grSnUdSkim = new TGraph(nSnSkim, snSkim, udSkim);
   grSnUdSkim->SetTitle("o3 vs Sunspot Number (skim)");
+  SetOptimalYRange(grSnUdSkim, 1.0);  // 100% margin for more breathing room
 
   TGraph *grSnUdMax = new TGraph(contEr, erSn, udMax);
   grSnUdMax->SetTitle("o3 vs Sunspot Number fluctuations (Max)");
