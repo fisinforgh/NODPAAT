@@ -1553,6 +1553,9 @@ public:
     }
 
     if (fProcessPid == 0) {
+      // Create a new process group so we can kill all child processes
+      setpgid(0, 0);
+
       if (!fSilentMode) {
         close(fPipeFd[0]);
         dup2(fPipeFd[1], STDOUT_FILENO);
@@ -1661,17 +1664,22 @@ public:
       return;
     }
 
-    AppendLog(Form("Cancelling process (PID: %d)...", fProcessPid));
+    // Stop the timer first to prevent CheckProcessOutput from being called during cancellation
+    if (fOutputTimer) {
+      fOutputTimer->Stop();
+    }
 
-    if (kill(fProcessPid, SIGTERM) == 0) {
-      AppendLog("Sent SIGTERM, waiting for process to terminate...");
+    AppendLog(Form("Cancelling process group (PID: %d)...", fProcessPid));
+
+    // Kill the entire process group (negative PID) to ensure child processes are also terminated
+    if (kill(-fProcessPid, SIGTERM) == 0) {
+      AppendLog("Sent SIGTERM to process group, waiting for processes to terminate...");
 
       for (int i = 0; i < 30; i++) {
         int status;
         pid_t result = waitpid(fProcessPid, &status, WNOHANG);
         if (result == fProcessPid) {
-          AppendLog("Process terminated gracefully.");
-          fOutputTimer->Stop();
+          AppendLog("Process group terminated gracefully.");
           CleanupProcess();
           fRunButton->SetEnabled(kTRUE);
           fCancelButton->SetEnabled(kFALSE);
@@ -1681,18 +1689,17 @@ public:
         gSystem->ProcessEvents();
       }
 
-      AppendLog("Process didn't terminate gracefully, using SIGKILL...");
-      if (kill(fProcessPid, SIGKILL) == 0) {
+      AppendLog("Process group didn't terminate gracefully, using SIGKILL...");
+      if (kill(-fProcessPid, SIGKILL) == 0) {
         waitpid(fProcessPid, nullptr, 0);
-        AppendLog("Process killed successfully.");
+        AppendLog("Process group killed successfully.");
       } else {
-        AppendLog("Error: failed to kill process.");
+        AppendLog("Error: failed to kill process group.");
       }
     } else {
-      AppendLog("Error: failed to send termination signal.");
+      AppendLog("Error: failed to send termination signal to process group.");
     }
 
-    fOutputTimer->Stop();
     CleanupProcess();
     fRunButton->SetEnabled(kTRUE);
     fCancelButton->SetEnabled(kFALSE);
