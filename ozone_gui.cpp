@@ -60,6 +60,7 @@ private:
   int fPipeFd[2];
   TTimer *fOutputTimer;
   Bool_t fProcessRunning;
+  Bool_t fCompletionHandled;
   Bool_t fSilentMode;
   Bool_t fNotificationsEnabled;
   std::chrono::time_point<std::chrono::steady_clock> fProcessStartTime;
@@ -108,7 +109,7 @@ private:
 public:
   OzoneGUI(const TGWindow *p, UInt_t w, UInt_t h)
       : TGMainFrame(p, w, h), fProcessPid(-1), fOutputTimer(nullptr),
-        fProcessRunning(kFALSE), fSilentMode(kFALSE),
+        fProcessRunning(kFALSE), fCompletionHandled(kFALSE), fSilentMode(kFALSE),
         fNotificationsEnabled(kTRUE), fCurrentFile(nullptr), fMacroPid(-1),
         fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroPipeFd(-1),
         fParam1Frame(nullptr), fParam2Frame(nullptr), fParam3Frame(nullptr),
@@ -1680,6 +1681,8 @@ public:
         fOutputTimer->Connect("Timeout()", "OzoneGUI", this,
                               "CheckProcessOutput()");
       }
+      // Ensure timer is on and start it
+      fOutputTimer->TurnOn();
       fOutputTimer->Start(500);
     } else {
       if (!fOutputTimer) {
@@ -1687,16 +1690,19 @@ public:
         fOutputTimer->Connect("Timeout()", "OzoneGUI", this,
                               "CheckProcessOutput()");
       }
+      // Ensure timer is on and start it
+      fOutputTimer->TurnOn();
       fOutputTimer->Start(1000);
     }
 
     fProcessRunning = kTRUE;
+    fCompletionHandled = kFALSE;
     fRunButton->SetEnabled(kFALSE);
     fCancelButton->SetEnabled(kTRUE);
   }
 
   void CheckProcessOutput() {
-    if (!fProcessRunning)
+    if (!fProcessRunning || fCompletionHandled)
       return;
 
     if (!fSilentMode && fPipeFd[0] != -1) {
@@ -1723,6 +1729,20 @@ public:
     pid_t result = waitpid(fProcessPid, &status, WNOHANG);
 
     if (result == fProcessPid) {
+      // Guard against re-entry - this MUST be the first check
+      if (fCompletionHandled)
+        return;
+
+      // Set flags immediately to prevent re-entry from queued timer events
+      fCompletionHandled = kTRUE;
+      fProcessRunning = kFALSE;
+
+      // Stop and turn off timer completely to prevent any queued events
+      if (fOutputTimer) {
+        fOutputTimer->TurnOff();
+        fOutputTimer->Stop();
+      }
+
       auto endTime = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::seconds>(
           endTime - fProcessStartTime);
@@ -1743,12 +1763,21 @@ public:
                        exitCode, durationStr.c_str()));
       }
 
-      ShowCompletionNotification(exitCode, durationStr);
+      // Cleanup pipes and process state
+      if (fPipeFd[0] != -1) {
+        close(fPipeFd[0]);
+        fPipeFd[0] = -1;
+      }
+      if (fPipeFd[1] != -1) {
+        close(fPipeFd[1]);
+        fPipeFd[1] = -1;
+      }
+      fProcessPid = -1;
 
-      fOutputTimer->Stop();
-      CleanupProcess();
       fRunButton->SetEnabled(kTRUE);
       fCancelButton->SetEnabled(kFALSE);
+
+      ShowCompletionNotification(exitCode, durationStr);
     } else if (result == -1) {
       AppendLog("Error: lost connection to process.");
       fOutputTimer->Stop();
