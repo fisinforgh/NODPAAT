@@ -224,47 +224,51 @@ public:
         new TGLayoutHints(kLHintsCenterX | kLHintsTop, 10, 10, 10, 5));
 
     // -------- Logo Section (Below Title) --------
-    TGVerticalFrame *logoFrame = new TGVerticalFrame(mainFrame, 150, 150);
+    TGHorizontalFrame *logoFrame = new TGHorizontalFrame(mainFrame, 600, 120);
 
-    // Try to load the university logo
-    TString logoPath = "logo_ud.png";
-    const TGPicture *logoPic = nullptr;
+    // Define logos to load: LIFAE, UD (center), and FISINFOR
+    TString logoFiles[3] = {"logo_lifae.png", "logo_ud.png", "logo_fisinfor.png"};
+    TString logoNames[3] = {"LIFAE", "Universidad Distrital", "FISINFOR"};
 
-    if (!gSystem->AccessPathName(logoPath)) {
-      logoPic = gClient->GetPicture(logoPath);
-    }
+    for (int i = 0; i < 3; i++) {
+      const TGPicture *logoPic = nullptr;
 
-    if (logoPic) {
-      // Scale logo to max 150x150 pixels
-      UInt_t maxSize = 150;
-      UInt_t logoWidth = logoPic->GetWidth();
-      UInt_t logoHeight = logoPic->GetHeight();
-
-      // Calculate scaled dimensions maintaining aspect ratio
-      if (logoWidth > maxSize || logoHeight > maxSize) {
-        Float_t scale = TMath::Min((Float_t)maxSize / logoWidth,
-                                   (Float_t)maxSize / logoHeight);
-        logoWidth = (UInt_t)(logoWidth * scale);
-        logoHeight = (UInt_t)(logoHeight * scale);
+      // Try to load the logo
+      if (!gSystem->AccessPathName(logoFiles[i])) {
+        logoPic = gClient->GetPicture(logoFiles[i]);
       }
 
-      TGIcon *logoIcon = new TGIcon(logoFrame, logoPic, logoWidth, logoHeight);
-      logoFrame->AddFrame(
-          logoIcon,
-          new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 5, 5));
-    } else {
-      // If logo not found, display university name
-      TGLabel *uniLabel = new TGLabel(
-          logoFrame, "Universidad Distrital\nFrancisco Jose de Caldas");
-      uniLabel->SetTextJustify(kTextCenterX);
-      TGFont *uniFont =
-          gClient->GetFont("-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*");
-      if (uniFont) {
-        uniLabel->SetTextFont(uniFont);
+      if (logoPic) {
+        // Scale logo to max 120x120 pixels
+        UInt_t maxSize = 120;
+        UInt_t logoWidth = logoPic->GetWidth();
+        UInt_t logoHeight = logoPic->GetHeight();
+
+        // Calculate scaled dimensions maintaining aspect ratio
+        if (logoWidth > maxSize || logoHeight > maxSize) {
+          Float_t scale = TMath::Min((Float_t)maxSize / logoWidth,
+                                     (Float_t)maxSize / logoHeight);
+          logoWidth = (UInt_t)(logoWidth * scale);
+          logoHeight = (UInt_t)(logoHeight * scale);
+        }
+
+        TGIcon *logoIcon = new TGIcon(logoFrame, logoPic, logoWidth, logoHeight);
+        logoFrame->AddFrame(
+            logoIcon,
+            new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 10, 10, 5, 5));
+      } else {
+        // If logo not found, display institution name
+        TGLabel *logoLabel = new TGLabel(logoFrame, logoNames[i]);
+        logoLabel->SetTextJustify(kTextCenterX);
+        TGFont *logoFont =
+            gClient->GetFont("-*-helvetica-bold-r-*-*-12-*-*-*-*-*-*-*");
+        if (logoFont) {
+          logoLabel->SetTextFont(logoFont);
+        }
+        logoFrame->AddFrame(
+            logoLabel,
+            new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 10, 10, 5, 5));
       }
-      logoFrame->AddFrame(
-          uniLabel,
-          new TGLayoutHints(kLHintsCenterX | kLHintsCenterY, 5, 5, 20, 20));
     }
 
     mainFrame->AddFrame(
@@ -354,6 +358,14 @@ public:
         "Developed at Universidad Distrital Francisco Jose de Caldas");
     descText->AddLine(
         "For research on atmospheric ozone measurements and analysis");
+    descText->AddLine("");
+    descText->AddLine("DEVELOPERS");
+    descText->AddLine("==========");
+    descText->AddLine("");
+    descText->AddLine("Research Groups:");
+    descText->AddLine("  • LIFAE  - Laboratorio de Investigacion en Fisica de "
+                      "Altas Energias");
+    descText->AddLine("  • FISINFOR - Fisica e Informatica");
     descText->AddLine("--------------------------------------------------------"
                       "---------------------");
 
