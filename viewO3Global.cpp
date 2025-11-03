@@ -276,7 +276,17 @@ O3ViewerGUI::O3ViewerGUI(const TGWindow *p, UInt_t w, UInt_t h,
 }
 
 O3ViewerGUI::~O3ViewerGUI() {
-  // Cleanup stored graphs first
+  // Clear canvas first to remove references to graphs
+  if (fEmbCanvas) {
+    TCanvas *canvas = fEmbCanvas->GetCanvas();
+    if (canvas) {
+      canvas->Clear();
+      canvas->Modified();
+      canvas->Update();
+    }
+  }
+
+  // Cleanup stored graphs
   if (fGrHistory) {
     delete fGrHistory;
     fGrHistory = nullptr;
@@ -938,7 +948,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
     // Superposition mode - load both history and comp
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
-      gPad->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+      gPad->SetBottomMargin(0.25);  // Increased margin to prevent label cutoff
       gPad->SetGrid();
 
       TString historyPath =
@@ -1009,6 +1019,10 @@ void O3ViewerGUI::LoadMultiYearPanel() {
           text->Draw();
         }
       }
+
+      // Force pad update to ensure labels are rendered
+      gPad->Modified();
+      gPad->Update();
     }
   } else {
     // Normal mode
@@ -1035,7 +1049,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
 
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
-      gPad->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+      gPad->SetBottomMargin(0.25);  // Increased margin to prevent label cutoff
       gPad->SetGrid();
 
       TString path;
@@ -1066,6 +1080,10 @@ void O3ViewerGUI::LoadMultiYearPanel() {
         text->SetTextSize(0.06);
         text->Draw();
       }
+
+      // Force pad update to ensure labels are rendered
+      gPad->Modified();
+      gPad->Update();
     }
   }
 

@@ -102,6 +102,7 @@ private:
   pid_t fMacroPid;
   TTimer *fMacroTimer;
   Bool_t fMacroRunning;
+  Bool_t fMacroCompletionHandled;
   std::chrono::time_point<std::chrono::steady_clock> fMacroStartTime;
 
   int fMacroPipeFd;
@@ -111,7 +112,8 @@ public:
       : TGMainFrame(p, w, h), fProcessPid(-1), fOutputTimer(nullptr),
         fProcessRunning(kFALSE), fCompletionHandled(kFALSE), fSilentMode(kFALSE),
         fNotificationsEnabled(kTRUE), fCurrentFile(nullptr), fMacroPid(-1),
-        fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroPipeFd(-1),
+        fMacroTimer(nullptr), fMacroRunning(kFALSE), fMacroCompletionHandled(kFALSE),
+        fMacroPipeFd(-1),
         fParam1Frame(nullptr), fParam2Frame(nullptr), fParam3Frame(nullptr),
         fParam4Frame(nullptr), fParam5Frame(nullptr), fParam6Frame(nullptr),
         fParam7Frame(nullptr), fParam8Frame(nullptr), fParam9Frame(nullptr),
@@ -1967,21 +1969,25 @@ public:
       fMacroTimer = new TTimer();
       fMacroTimer->Connect("Timeout()", "OzoneGUI", this, "CheckMacroOutput()");
     }
+    // Ensure timer is on and start it
+    fMacroTimer->TurnOn();
     fMacroTimer->Start(500);
 
     fMacroRunning = kTRUE;
+    fMacroCompletionHandled = kFALSE;
     fRunMacroButton->SetEnabled(kFALSE);
     fCancelMacroButton->SetEnabled(kTRUE);
   }
 
   void CheckMacroOutput() {
-    if (!fMacroRunning)
+    if (!fMacroRunning || fMacroCompletionHandled)
       return;
 
     // Read output from pipe
     if (fMacroPipeFd != -1) {
       char buffer[4096];
       ssize_t bytesRead;
+      int linesRead = 0;
 
       while ((bytesRead = read(fMacroPipeFd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytesRead] = '\0';
@@ -1990,7 +1996,12 @@ public:
         while (line != nullptr) {
           AppendMacroLog(line);
           line = strtok(nullptr, "\n");
+          linesRead++;
         }
+      }
+
+      // Only process events after reading all output to avoid conflicts with other tabs
+      if (linesRead > 0) {
         gSystem->ProcessEvents();
       }
     }
@@ -2000,6 +2011,20 @@ public:
     pid_t result = waitpid(fMacroPid, &status, WNOHANG);
 
     if (result == fMacroPid) {
+      // Guard against re-entry - this MUST be the first check
+      if (fMacroCompletionHandled)
+        return;
+
+      // Set flags immediately to prevent re-entry from queued timer events
+      fMacroCompletionHandled = kTRUE;
+      fMacroRunning = kFALSE;
+
+      // Stop and turn off timer completely to prevent any queued events
+      if (fMacroTimer) {
+        fMacroTimer->TurnOff();
+        fMacroTimer->Stop();
+      }
+
       auto endTime = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::seconds>(
           endTime - fMacroStartTime);
@@ -2021,14 +2046,13 @@ public:
                             exitCode, durationStr.c_str()));
       }
 
-      // Cleanup
-      fMacroTimer->Stop();
+      // Cleanup pipes and process state
       if (fMacroPipeFd != -1) {
         close(fMacroPipeFd);
         fMacroPipeFd = -1;
       }
       fMacroPid = -1;
-      fMacroRunning = kFALSE;
+
       fRunMacroButton->SetEnabled(kTRUE);
       fCancelMacroButton->SetEnabled(kFALSE);
 
