@@ -21,6 +21,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
                           int optLinear, float rMin, float rMax, float rfmMin,
                           float rfmMax, float rErMin, float rErMax) {
 
+  gROOT->SetBatch(kTRUE);  // Run in batch mode - no GUI windows
+
   const int mMax = 12;
   const int nMax = 367;
   const int YYMin = 1979;
