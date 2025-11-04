@@ -25,8 +25,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
   const int nMax = 367;
   const int YYMin = 1979;
   const int YYCur = 2024;
-  const int YYCurNext = 1978 + 4 * snT; // five times solar cicle (int snT)
-  const int YYMax = 1978 + 5 * snT;     // five times solar cicle (int snT)
+  const int YYCurNext = 2024; // last year with complete data for predictions
+  const int YYMax = 2024 + snT;     // extend to show future predictions
 
   //  bin size
   // o3 UD: rMin, rMax
