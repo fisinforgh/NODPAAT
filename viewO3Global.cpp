@@ -560,6 +560,7 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
       canvas->Clear();
       canvas->cd();
       canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+      canvas->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
       canvas->SetGrid();
 
       bool drawnFirst = false;
@@ -569,6 +570,7 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
       // Redraw History
       if (fGrHistory->GetN() > 0) {
         fGrHistory->Draw(drawOptHistory.Data());
+        fGrHistory->GetYaxis()->SetTitle("Ozone (DU)");
         drawnFirst = true;
       }
 
@@ -578,6 +580,7 @@ void O3ViewerGUI::OnConnectHistoryToggled() {
           fGrTeo->Draw(Form("%s SAME", drawOptTeo.Data()));
         } else {
           fGrTeo->Draw(drawOptTeo.Data());
+          fGrTeo->GetYaxis()->SetTitle("Ozone (DU)");
         }
       }
 
@@ -613,6 +616,7 @@ void O3ViewerGUI::OnConnectTeoToggled() {
       canvas->Clear();
       canvas->cd();
       canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+      canvas->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
       canvas->SetGrid();
 
       bool drawnFirst = false;
@@ -622,6 +626,7 @@ void O3ViewerGUI::OnConnectTeoToggled() {
       // Redraw History
       if (fGrHistory->GetN() > 0) {
         fGrHistory->Draw(drawOptHistory.Data());
+        fGrHistory->GetYaxis()->SetTitle("Ozone (DU)");
         drawnFirst = true;
       }
 
@@ -631,6 +636,7 @@ void O3ViewerGUI::OnConnectTeoToggled() {
           fGrTeo->Draw(Form("%s SAME", drawOptTeo.Data()));
         } else {
           fGrTeo->Draw(drawOptTeo.Data());
+          fGrTeo->GetYaxis()->SetTitle("Ozone (DU)");
         }
       }
 
@@ -694,16 +700,26 @@ void O3ViewerGUI::DrawObject(TObject *obj, const char *path) {
   TCanvas *canvas = fEmbCanvas->GetCanvas();
   canvas->cd();
   canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+  canvas->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
   canvas->SetGrid();
+
+  TString pathStr(path);
+  bool isHistoryOrTeo = pathStr.Contains("/history/") || pathStr.Contains("/comp/");
 
   if (obj->InheritsFrom("TGraph")) {
     TGraph *gr = (TGraph *)obj;
     TGraph *grClone = (TGraph *)gr->Clone();
     grClone->Draw("AP");
+    if (isHistoryOrTeo) {
+      grClone->GetYaxis()->SetTitle("Ozone (DU)");
+    }
   } else if (obj->InheritsFrom("TH1")) {
     TH1 *h = (TH1 *)obj;
     TH1 *hClone = (TH1 *)h->Clone();
     hClone->Draw("hist");
+    if (isHistoryOrTeo) {
+      hClone->GetYaxis()->SetTitle("Ozone (DU)");
+    }
   } else if (obj->InheritsFrom("TCanvas")) {
     TCanvas *storedCanvas = (TCanvas *)obj;
     storedCanvas->DrawClonePad();
@@ -726,6 +742,7 @@ void O3ViewerGUI::LoadSuperposition() {
   canvas->Clear();
   canvas->cd();
   canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+  canvas->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
   canvas->SetGrid();
 
   TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
@@ -774,6 +791,7 @@ void O3ViewerGUI::LoadSuperposition() {
       fGrHistory->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
       TString drawOpt = fConnectHistory ? "APL" : "AP";
       fGrHistory->Draw(drawOpt.Data());
+      fGrHistory->GetYaxis()->SetTitle("Ozone (DU)");
       drawnFirst = true;
       historyDrawn = true;
     } else {
@@ -812,6 +830,7 @@ void O3ViewerGUI::LoadSuperposition() {
       } else {
         fGrTeo->SetTitle(Form("%s - Year %s", graphName.Data(), year.Data()));
         fGrTeo->Draw("PL");
+        fGrTeo->GetYaxis()->SetTitle("Ozone (DU)");
         drawnFirst = true;
       }
       teoDrawn = true;
@@ -949,6 +968,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
       gPad->SetBottomMargin(0.25);  // Increased margin to prevent label cutoff
+      gPad->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
       gPad->SetGrid();
 
       TString historyPath =
@@ -973,6 +993,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
           gr->SetMarkerStyle(20);
           gr->SetMarkerSize(0.6);
           gr->Draw(drawOptHistory.Data());
+          gr->GetYaxis()->SetTitle("Ozone (DU)");
           drawnFirst = true;
           anythingDrawn = true;
         } else {
@@ -995,6 +1016,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
           } else {
             gr->SetTitle(Form("%s", years[i].Data()));
             gr->Draw(Form("A%s", drawOptTeo.Data()));
+            gr->GetYaxis()->SetTitle("Ozone (DU)");
           }
           anythingDrawn = true;
         } else {
@@ -1050,6 +1072,7 @@ void O3ViewerGUI::LoadMultiYearPanel() {
     for (Int_t i = 0; i < nYears; i++) {
       canvas->cd(i + 1);
       gPad->SetBottomMargin(0.25);  // Increased margin to prevent label cutoff
+      gPad->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
       gPad->SetGrid();
 
       TString path;
@@ -1068,10 +1091,16 @@ void O3ViewerGUI::LoadMultiYearPanel() {
           TGraph *gr = (TGraph *)obj->Clone(Form("gr_%s", years[i].Data()));
           gr->SetTitle(Form("%s - %s", years[i].Data(), graphName.Data()));
           gr->Draw("AP");
+          if (catId == 2 || catId == 3) {
+            gr->GetYaxis()->SetTitle("Ozone (DU)");
+          }
         } else if (obj->InheritsFrom("TH1")) {
           TH1 *h = (TH1 *)obj->Clone(Form("h_%s", years[i].Data()));
           h->SetTitle(Form("%s - %s", years[i].Data(), graphName.Data()));
           h->Draw("hist");
+          if (catId == 2 || catId == 3) {
+            h->GetYaxis()->SetTitle("Ozone (DU)");
+          }
         }
       } else {
         TLatex *text =
@@ -1120,6 +1149,7 @@ void O3ViewerGUI::LoadGraph() {
   canvas->Clear();
   canvas->cd();
   canvas->SetBottomMargin(0.20);  // Increase bottom margin to show x-axis label
+  canvas->SetLeftMargin(0.15);    // Increase left margin to show y-axis label
 
   if (catId == 0) {
     TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
