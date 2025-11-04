@@ -705,11 +705,20 @@ void O3ViewerGUI::DrawObject(TObject *obj, const char *path) {
 
   TString pathStr(path);
   bool isHistoryOrTeo = pathStr.Contains("/history/") || pathStr.Contains("/comp/");
+  bool isFormFactor = pathStr.Contains("/fm/");
 
   if (obj->InheritsFrom("TGraph")) {
     TGraph *gr = (TGraph *)obj;
     TGraph *grClone = (TGraph *)gr->Clone();
-    grClone->Draw("AP");
+    // Set larger marker size for Form Factor graphs and connect with lines
+    if (isFormFactor) {
+      grClone->SetMarkerStyle(20);  // Filled circle marker
+      grClone->SetMarkerSize(4.0);  // Large markers
+      grClone->SetMarkerColor(kBlue);  // Blue markers
+      grClone->Draw("APL");  // Connect dots with lines
+    } else {
+      grClone->Draw("AP");
+    }
     if (isHistoryOrTeo) {
       grClone->GetYaxis()->SetTitle("Ozone (DU)");
     }
@@ -1090,7 +1099,16 @@ void O3ViewerGUI::LoadMultiYearPanel() {
         if (obj->InheritsFrom("TGraph")) {
           TGraph *gr = (TGraph *)obj->Clone(Form("gr_%s", years[i].Data()));
           gr->SetTitle(Form("%s - %s", years[i].Data(), graphName.Data()));
-          gr->Draw("AP");
+          // Set marker size and draw options - larger for Form Factor graphs
+          if (catId == 1) {
+            gr->SetMarkerStyle(20);  // Filled circle marker
+            gr->SetMarkerSize(4.0);  // Large markers for Form Factor
+            gr->SetMarkerColor(kBlue);  // Blue markers
+            gr->Draw("APL");  // Connect dots with lines for Form Factor
+          } else {
+            gr->SetMarkerSize(0.8);
+            gr->Draw("AP");
+          }
           if (catId == 2 || catId == 3) {
             gr->GetYaxis()->SetTitle("Ozone (DU)");
           }
@@ -1231,26 +1249,27 @@ void O3ViewerGUI::LoadGraph() {
       }
     }
   } else if (catId >= 1 && catId <= 4) {
-    TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
-    if (!anaDir) {
-      fStatusLabel->SetText("Error: ana directory not found!");
-      canvas->Modified();
-      canvas->Update();
-      return;
-    }
+    // Commented out pre-saved canvas loading to use individual graphs with custom marker sizes
+    // TDirectory *anaDir = (TDirectory *)fRootFile->Get("ana");
+    // if (!anaDir) {
+    //   fStatusLabel->SetText("Error: ana directory not found!");
+    //   canvas->Modified();
+    //   canvas->Update();
+    //   return;
+    // }
 
-    TString canvasNames[] = {"", "Form Factor", "History O3", "O3 Teo Study",
-                             "O3 Teo Error"};
+    // TString canvasNames[] = {"", "Form Factor", "History O3", "O3 Teo Study",
+    //                          "O3 Teo Error"};
 
-    TCanvas *storedCanvas = (TCanvas *)anaDir->Get(canvasNames[catId].Data());
-    if (storedCanvas) {
-      canvas->cd();
-      storedCanvas->DrawClonePad();
-      canvas->Modified();
-      canvas->Update();
-      fStatusLabel->SetText(Form("Loaded: %s", canvasNames[catId].Data()));
-      return;
-    }
+    // TCanvas *storedCanvas = (TCanvas *)anaDir->Get(canvasNames[catId].Data());
+    // if (storedCanvas) {
+    //   canvas->cd();
+    //   storedCanvas->DrawClonePad();
+    //   canvas->Modified();
+    //   canvas->Update();
+    //   fStatusLabel->SetText(Form("Loaded: %s", canvasNames[catId].Data()));
+    //   return;
+    // }
 
     TGTextLBEntry *yearEntry = (TGTextLBEntry *)fYearCombo->GetSelectedEntry();
     TGTextLBEntry *graphEntry =
