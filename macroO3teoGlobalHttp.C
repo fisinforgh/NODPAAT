@@ -123,7 +123,17 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
     exit(8);
   }
 
-  TFile *file = new TFile("global.root", "RECREATE");
+  // Create ROOT file directly in final location
+  char rootFileName[500];
+  strcpy(rootFileName, "skim_");
+  strcat(rootFileName, preLoc);
+  strcat(rootFileName, "/");
+  strcat(rootFileName, preLoc);
+  strcat(rootFileName, "_global.root");
+
+  cout << "ROOT output file:\t" << rootFileName << endl;
+
+  TFile *file = new TFile(rootFileName, "RECREATE");
   file->mkdir("ana");
 
   TCanvas *c11 = new TCanvas("Solar Calculus", "Solar Calculus", 500, 1000);
@@ -484,6 +494,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       tex->Draw();
       texfm->Draw();
       textfm->Draw();
+      gPad->Modified();
+      gPad->Update();
 
       sprintf(writeRoot, "%d/fm", YY);
       file->cd(writeRoot);
@@ -536,6 +548,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       tex->Draw();
       texdu->Draw();
     }
+    gPad->Modified();
+    gPad->Update();
     //===END====c33===History============
 
     //====c44===o3teo==STUDY============
@@ -547,6 +561,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       tex->Draw();
       texdu->Draw();
       t1->Draw();
+      gPad->Modified();
+      gPad->Update();
 
       c44->cd(YY - YYMin + 1 + snT);
       c44->cd(YY - YYMin + 1 + snT)->SetGridx();
@@ -555,6 +571,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       tex->Draw();
       texdu->Draw();
       t2->Draw();
+      gPad->Modified();
+      gPad->Update();
 
     } else if ((YY >= (YYMin + snT)) && (YY <= (YYMax - snT))) {
       c44->cd(YY - YYMin + snT + 1);
@@ -563,6 +581,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       gro3teo->DrawClone("AP");
       t2->Draw();
       texdu->Draw();
+      gPad->Modified();
+      gPad->Update();
 
       c44->cd(YY - YYMin + 1);
       c44->cd(YY - YYMin + 1)->SetGridx();
@@ -570,6 +590,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       grUdExp->DrawClone("P");
       tex->Draw();
       t1->Draw();
+      gPad->Modified();
+      gPad->Update();
     }
 
     else if ((YY > YYMax - snT) && (YY <= YYMax)) {
@@ -583,6 +605,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       }
       tex->Draw();
       t1->Draw();
+      gPad->Modified();
+      gPad->Update();
     }
 
     sprintf(writeRoot, "%d/history", YY);
@@ -607,6 +631,8 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
       t3->Draw();
       t4->Draw();
       tex->Draw();
+      gPad->Modified();
+      gPad->Update();
     }
     sprintf(writeRoot, "%d/error", YY);
     file->cd(writeRoot);
@@ -672,6 +698,51 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
 
   //======END=c11===SOLAR=CALULATIONS==================
 
+  // Mark all pads as modified and update to ensure all primitives are saved
+  TIter nextPad22(c22->GetListOfPrimitives());
+  while (TPad *pad = (TPad*)nextPad22()) {
+    if (pad->InheritsFrom("TPad")) {
+      pad->Modified();
+      pad->Update();
+    }
+  }
+
+  TIter nextPad33(c33->GetListOfPrimitives());
+  while (TPad *pad = (TPad*)nextPad33()) {
+    if (pad->InheritsFrom("TPad")) {
+      pad->Modified();
+      pad->Update();
+    }
+  }
+
+  TIter nextPad44(c44->GetListOfPrimitives());
+  while (TPad *pad = (TPad*)nextPad44()) {
+    if (pad->InheritsFrom("TPad")) {
+      pad->Modified();
+      pad->Update();
+    }
+  }
+
+  TIter nextPad55(c55->GetListOfPrimitives());
+  while (TPad *pad = (TPad*)nextPad55()) {
+    if (pad->InheritsFrom("TPad")) {
+      pad->Modified();
+      pad->Update();
+    }
+  }
+
+  // Mark canvases as modified and update
+  c11->Modified();
+  c11->Update();
+  c22->Modified();
+  c22->Update();
+  c33->Modified();
+  c33->Update();
+  c44->Modified();
+  c44->Update();
+  c55->Modified();
+  c55->Update();
+
   file->cd("ana");
   c11->Write();
   c22->Write();
@@ -685,15 +756,9 @@ void macroO3teoGlobalHttp(float lat, float lon, const char preLoc[10], int snT,
   grRoR2->Write();
   grGIse->Write();
 
-  char cmdMv[200];
-  strcpy(cmdMv, "mv global.root skim_");
-  strcat(cmdMv, preLoc);
-  strcat(cmdMv, "/");
-  strcat(cmdMv, preLoc);
-  strcat(cmdMv, "_global.root");
-
-  system(cmdMv);
-
+  // File is already in the correct location, no need to move it
   file->Close();
+
+  cout << "Data saved successfully to: " << rootFileName << endl;
 
 } // void macroHistory

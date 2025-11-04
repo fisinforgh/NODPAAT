@@ -1324,8 +1324,27 @@ public:
         canvas->cd(i + 1);
         storedCanvas->DrawClonePad();
 
+        // Force update on all sub-pads to ensure axis histograms are created
+        TPad *currentPad = (TPad*)canvas->GetPad(i + 1);
+        if (currentPad) {
+          TIter nextPad(currentPad->GetListOfPrimitives());
+          TObject *obj;
+          while ((obj = nextPad())) {
+            if (obj->InheritsFrom("TPad")) {
+              TPad *pad = (TPad*)obj;
+              pad->Modified();
+              pad->Update();
+            }
+          }
+          currentPad->Modified();
+          currentPad->Update();
+        }
+
         fCurrentObjects.push_back(storedCanvas);
       }
+
+      canvas->Modified();
+      canvas->Update();
 
       fGraphInfoLabel->SetText(Form("File: %s - Displayed %d canvas(es)",
                                     gSystem->BaseName(filename.Data()),
