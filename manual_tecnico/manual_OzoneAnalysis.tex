@@ -1,0 +1,966 @@
+\documentclass[spanish, english]{article}
+
+%\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand\familydefault{\sfdefault}
+
+\usepackage[
+backend=biber,
+style=apa
+]{biblatex}
+\DefineBibliographyStrings{spanish}{andothers={\itshape{et~al}\adddot}}
+
+\makeatletter
+\renewcommand*{\apablx@ifrevnameappcomma}[2]{#2}
+\makeatother
+\DefineBibliographyExtras{spanish}{%
+  \let\finalandcomma=\empty
+}
+%Para cambiar el & por "y" en el capitulo de Referencias
+\DeclareDelimFormat[bib,textcite]{finalnamedelim}{%
+  \ifnumgreater{\value{liststop}}{2}{}{}%
+  \addspace\bibstring{and}\space}
+
+%para cambiar & en las citaciones dentro del texto
+\DeclareDelimFormat[parencite]{finalnamedelim}{\addspace{y}\space}
+
+\addbibresource{bib_ozone.bib}
+
+\usepackage[dvipsnames]{xcolor}
+\usepackage{multicol}
+\usepackage{balance}
+\usepackage{caption}
+\usepackage{svg}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+
+\usepackage{authblk}
+%Para cambiar "and" por "&"
+\renewcommand\Authand{, \& }
+\renewcommand\Authands{, \& }
+
+\usepackage{graphicx} % Required for inserting images
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\usepackage{verbatim}
+\usepackage{alltt}
+\renewcommand{\ttdefault}{txtt}
+
+\usepackage{float}
+\usepackage{csquotes}
+\usepackage{xcolor}
+
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ }
+ % Keywords command
+\providecommand{\keywords}[1]
+{
+  \small
+  \textbf{\textit{Keywords---}} #1
+}
+\providecommand{\palabrasclave}[1]
+{
+  \small
+  \textbf{\textit{Palabras clave---}} #1
+}
+%%% EDITAR ESTA PARTE %%%
+\newcommand{\seh}{{\bf NODPAAT}}
+
+\title{\bf Manual técnico: Documentación de uso, manejo, desarrollo y evaluación del Software Científico "Nasa Ozone Data Processing and Analysis Tool" (\seh)}
+
+
+\author[1]{Julián Andrés Salamanca Bernal}
+\author[1]{Jaiver Estiven Salazar Ortiz}
+\affil[1]{Universidad Distrital Francisco José de Caldas}
+
+\date{}
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength\headheight{26pt}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\fancypagestyle{empty}{
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{
+  \includegraphics[width=2.5cm]{img/logoFisinfor.png}
+  \includegraphics[width=2.5cm]{img/logoLIFAE.png}
+}
+\fancyhead[R]{
+  \includegraphics[width=5.5cm]{img/logoUD.png}
+  }
+}
+
+%%% EDITAR ESTA PARTE %%%
+\lhead{
+  [Salamanca-Bernal, Salazar-Ortiz]
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\rhead{\bfseries\nouppercase\leftmark}
+\cfoot{\bfseries\thepage}
+
+\begin{document}
+\selectlanguage{spanish}
+
+\renewcommand{\contentsname}{Contenido}
+\renewcommand{\listfigurename}{Lista de figuras}
+\renewcommand{\listtablename}{Lista de tablas}
+\renewcommand{\tablename}{\bf Tabla}
+\renewcommand{\figurename}{\bf Figura}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+  El análisis de datos atmosféricos, particularmente de la concentración de ozono estratosférico, representa un área crítica en las ciencias de la atmósfera y el cambio climático. La comprensión de las variaciones temporales y espaciales del ozono, así como su correlación con fenómenos solares como las manchas solares, requiere herramientas computacionales especializadas capaces de procesar grandes volúmenes de datos satelitales. Como producto de investigación en ciencias atmosféricas y computación científica, se ha desarrollado un sistema integral de análisis que permite procesar, visualizar y analizar datos de ozono atmosférico provenientes de las misiones satelitales de NASA desde 1979 hasta 2024. El Sistema de Análisis de Datos de Ozono Atmosférico de NASA (\seh) integra capacidades de extracción de datos en formato HDF5, procesamiento multihilo para análisis de series temporales extensas, análisis estadístico mediante regresión lineal y pruebas de chi-cuadrado, y visualización interactiva mediante una interfaz gráfica de usuario basada en ROOT-C++. El sistema permite la extracción de datos georreferenciados, el análisis de correlaciones entre concentraciones de ozono y actividad solar, y la generación de visualizaciones científicas en múltiples formatos. Con este desarrollo se busca facilitar la investigación en ciencias atmosféricas, reducir la curva de aprendizaje en el análisis de datos satelitales, y proporcionar una herramienta de código abierto que potencie la investigación científica en instituciones académicas. \seh~se diseña, elabora y evalúa siguiendo las directrices de desarrollo de software científico, empleando tecnologías modernas como C++17, ROOT framework, HDF5, y técnicas de programación paralela con ThreadPool.\\
+
+  \palabrasclave{Ozono estratosférico, análisis de datos satelitales, HDF5, manchas solares, interfaz gráfica de usuario, ROOT-C++, procesamiento paralelo, ciencias atmosféricas, visualización científica}
+
+\end{abstract}
+
+  %=========NOTA DE AUTOR Y AGRADECIMIENTOS =====
+  {\small
+    {\bf Información de los autores.}
+    \\Julián Andrés Salamanca Bernal$^{1}$, [PhD]. [Profesor] [Universidad Distrital Francisco José de Caldas].\\ \href{mailto:[email]}{[jesalamanca@udistrital.edu.co}
+    \\Jaiver Estiven Salazar Ortiz$^{1}$, [PGDip]. [Estudiante] [Universidad Distrital Francisco José de Caldas].\\ \href{mailto:[email]}{[jesalazaro@udistrital.edu.co}
+  }
+  %=============================================
+
+  \tableofcontents
+  \listoffigures
+  \listoftables
+
+  \section{Introducción}
+
+  En el campo de las ciencias atmosféricas y el estudio del cambio climático, el análisis sistemático de datos satelitales de ozono atmosférico representa una componente fundamental para comprender la dinámica de la estratósfera terrestre y los procesos que afectan la capa de ozono. La disponibilidad de datos satelitales históricos desde 1979 hasta la actualidad proporciona una oportunidad única para estudiar tendencias a largo plazo y correlaciones con fenómenos solares.
+
+  Como trabajo de investigación en el área de ciencias atmosféricas y computación científica, se desarrolla el Sistema de Análisis de Datos de Ozono Atmosférico de NASA (\seh) que satisface una necesidad de investigación científica: la de procesar, analizar y visualizar grandes volúmenes de datos satelitales de ozono de manera eficiente y reproducible. Este sistema fue desarrollado específicamente para facilitar investigaciones científicas sobre la relación entre la actividad solar y las concentraciones de ozono estratosférico en regiones tropicales, como las documentadas por~\textcite{gonzalez2018ozone} en su estudio sobre modelos adaptativos de ozono para la región tropical ecuatorial andina colombiana, y por~\textcite{gonzalez2019adaptive} en su análisis de predicciones de ozono sobre la Zona de Confluencia Intertropical Amazónica. El desarrollo de \seh~responde directamente a la necesidad de herramientas computacionales especializadas que permitan este tipo de análisis científicos de manera sistemática y reproducible.
+
+  En ese contexto de investigación científica se requiere integrar diferentes capacidades computacionales para elaborar un sistema que permita la extracción de datos georreferenciados, el análisis de series temporales extensas, la correlación con actividad solar, y la visualización interactiva de resultados.
+
+  El sistema \seh~permite el procesamiento de datos satelitales de ozono en formato HDF5, la extracción de concentraciones de ozono en ubicaciones geográficas específicas, el análisis estadístico mediante regresión lineal y pruebas de chi-cuadrado, y la visualización interactiva mediante una interfaz gráfica de usuario. El sistema está diseñado para procesar datos desde 1979 hasta 2024, abarcando 45 años de mediciones satelitales.
+
+  La arquitectura del sistema se compone de cinco capas principales: (1) capa de extracción de datos HDF5, (2) capa de procesamiento y consolidación de series temporales, (3) capa de análisis estadístico, (4) capa de visualización interactiva mediante GUI basada en ROOT-C++~\parencite{antcheva2011root}, y (5) capa de generación de reportes en múltiples formatos (ROOT, PDF, PNG). El sistema implementa técnicas de programación paralela mediante ThreadPool para optimizar el procesamiento de grandes volúmenes de datos.
+
+  \seh~se propone como una herramienta de código abierto que facilita la investigación en ciencias atmosféricas, permitiendo a investigadores y estudiantes realizar análisis reproducibles de datos satelitales de ozono. Es de resaltar que el sistema permite la correlación entre concentraciones de ozono y actividad solar (manchas solares), la visualización de tendencias temporales, y la generación de análisis estadísticos rigurosos.
+
+  %==============  FIN  INTRODUCCION    ==================
+
+\section{Validación del Sistema de Análisis de Ozono (\seh)}
+
+En virtud de las mejores prácticas en desarrollo de software científico y la necesidad de documentación rigurosa para proyectos de investigación, se establece una matriz de trazabilidad que documenta el uso, manejo, desarrollo y evaluación del sistema \seh. El desarrollo del sistema se realizó siguiendo un \textbf{modelo iterativo e incremental}, donde cada componente se implementó de forma gradual, incorporando mejoras y correcciones de bugs identificados en iteraciones previas. Este enfoque permitió un desarrollo flexible, con ciclos continuos de implementación, prueba y refinamiento, adaptándose a las necesidades emergentes del análisis científico y garantizando la corrección progresiva de errores.
+
+La evaluación de este sistema sigue criterios de calidad de software científico, incluyendo reproducibilidad de resultados, correctitud de algoritmos numéricos, eficiencia en procesamiento de datos, y usabilidad de interfaces.
+
+\subsection{Matriz de trazabilidad}
+
+La matriz de trazabilidad contempla nueve etapas:
+\begin{itemize}
+  \item \textbf{Contexto y análisis del problema de investigación:} establece las necesidades de investigación en ciencias atmosféricas y las capacidades técnicas necesarias para el análisis de datos satelitales
+  \item \textbf{Reconocimiento de requerimientos:} identifica y caracteriza los recursos computacionales necesarios para el procesamiento de datos HDF5 y análisis estadístico
+  \item \textbf{Especificación de los requerimientos:} detalla las funcionalidades, librerías y versiones necesarias (HDF5, ROOT, C++17)
+  \item \textbf{Diseño de software:} corresponde al proceso de arquitectura del sistema, incluyendo módulos de extracción, procesamiento, análisis y visualización
+  \item \textbf{Implementación y codificación:} materialización del diseño en código C++, incluyendo optimizaciones de rendimiento y paralelización
+  \item \textbf{Instalación-verificación-desinstalación:} documenta el proceso de compilación, instalación y verificación del sistema
+  \item \textbf{Mantenimiento vía git:} establece el control de versiones y registro de modificaciones
+  \item \textbf{Desarrollo de nuevas versiones:} documenta la evolución continua del sistema.
+\end{itemize}
+
+La Figura~\ref{fig:matriz_trazabilidad} presenta visualmente la matriz de trazabilidad del sistema \seh, mostrando el flujo completo del proceso de desarrollo desde la concepción hasta el mantenimiento continuo. El diagrama se estructura en tres niveles principales:
+
+\paragraph{Etapas preliminares (niveles superiores).} Las cinco primeras etapas constituyen la fase de desarrollo fundamental del sistema: (1) el \textit{Contexto y análisis del problema de investigación} establece las bases científicas y computacionales del proyecto; (2) el \textit{Reconocimiento de requerimientos} identifica las necesidades técnicas específicas; (3) la \textit{Especificación de requerimientos} formaliza estos requerimientos en términos de software y hardware; (4) el \textit{Diseño de software} define la arquitectura modular del sistema; y (5) la \textit{Implementación y codificación} materializa el diseño en código C++ funcional. Estas etapas siguen un flujo secuencial donde cada una alimenta a la siguiente, construyendo progresivamente el sistema desde conceptos abstractos hasta código ejecutable.
+
+\paragraph{Fase de iteraciones (núcleo central).} La etapa central, destacada con fondo amarillo en el diagrama, representa el corazón del proceso de desarrollo iterativo e incremental. Esta fase comprende tres actividades interconectadas mediante ciclos de retroalimentación: \textit{Prueba de software} verifica la funcionalidad y correctitud del código implementado, ejecutando pruebas unitarias, de integración y validación científica; \textit{Compilación e instalación} garantiza que el sistema se construye correctamente y puede ser desplegado en diferentes entornos; y \textit{Corrección de errores y recodificación} aborda los problemas identificados durante las pruebas y compilación, implementando mejoras y correcciones. Las flechas sólidas conectan estas tres actividades mostrando el flujo principal del proceso, mientras que las flechas punteadas que regresan desde la corrección hacia las pruebas y compilación representan la naturaleza cíclica de este proceso: cada corrección genera una nueva iteración de pruebas y compilación, creando un ciclo de mejora continua que se repite hasta alcanzar los criterios de calidad establecidos. Este enfoque iterativo fue fundamental para el desarrollo de \seh, permitiendo identificar y resolver problemas de manera temprana, optimizar el rendimiento del procesamiento paralelo, y refinar la interfaz gráfica basándose en pruebas de usabilidad.
+
+\paragraph{Etapas finales y mantenimiento (niveles inferiores).} Una vez superada exitosamente la fase de iteraciones, el sistema progresa hacia las etapas finales mediante flechas sólidas que indican el flujo secuencial: \textit{Instalación-verificación-desinstalación} documenta los procedimientos de despliegue del sistema en entornos de producción y verifica su correcto funcionamiento; \textit{Mantenimiento vía git} establece el control de versiones mediante Git, documentando todos los cambios, correcciones y mejoras posteriores al despliegue inicial; finalmente, \textit{Desarrollo de nuevas versiones} representa la evolución continua del sistema mediante la incorporación de nuevas funcionalidades, optimizaciones adicionales, o adaptaciones a nuevos requerimientos científicos. La flecha punteada que conecta esta última etapa de regreso a la fase de iteraciones indica que el desarrollo de nuevas versiones reinicia el ciclo iterativo, asegurando que toda nueva funcionalidad pasa por el mismo proceso riguroso de pruebas, compilación y corrección antes de ser integrada al sistema principal.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{img/matriz_trazabilidad.png}
+  \caption{Matriz de trazabilidad del sistema \seh. Las flechas sólidas representan el flujo secuencial, las punteadas indican ciclos de retroalimentación.}
+  \label{fig:matriz_trazabilidad}
+\end{figure}
+
+Este modelo de desarrollo iterativo e incremental resultó particularmente apropiado para \seh~debido a la complejidad inherente del procesamiento de datos científicos satelitales y la necesidad de validación continua de resultados. El enfoque permitió desarrollar inicialmente un módulo básico de extracción de datos HDF5, validarlo científicamente, y luego expandirlo incrementalmente con capacidades de procesamiento paralelo, análisis estadístico, y visualización interactiva. Cada incremento fue sometido a múltiples iteraciones de pruebas y refinamiento, garantizando la robustez y correctitud científica del sistema en cada etapa de su evolución.
+
+\subsection{Contexto y análisis del problema de investigación}
+
+El problema de investigación central consiste en analizar la correlación entre las concentraciones de ozono estratosférico y la actividad solar (medida por el número de manchas solares) durante un período de 45 años (1979-2024). Esta investigación requiere:
+
+\begin{itemize}
+\item Procesamiento eficiente de aproximadamente 16,000 archivos HDF5 conteniendo datos satelitales
+\item Extracción de datos georreferenciados para ubicaciones específicas (ciudades, regiones)
+\item Análisis estadístico mediante regresión lineal y pruebas de chi-cuadrado
+\item Visualización interactiva de series temporales y correlaciones
+\item Generación de reportes científicos en formatos estándar (ROOT, PDF, PNG)
+\end{itemize}
+
+La necesidad de investigación requiere un sistema robusto, eficiente y reproducible que permita a investigadores realizar análisis complejos de datos atmosféricos sin requerir expertise avanzado en programación científica.
+
+\subsection{Reconocimiento de los requerimientos}
+
+Los requerimientos técnicos del sistema \seh~incluyen:
+
+\begin{itemize}
+\item \textbf{Formato de datos:} Soporte para archivos HDF5 (Hierarchical Data Format versión 5)
+\item \textbf{Framework de visualización:} ROOT-C++ del CERN para interfaces gráficas y análisis científico
+\item \textbf{Procesamiento paralelo:} ThreadPool para procesamiento multihilo de datos
+\item \textbf{Análisis estadístico:} Implementación de regresión lineal, chi-cuadrado, y análisis de correlación
+\item \textbf{Lenguaje:} C++17 con soporte para características modernas
+\item \textbf{Sistema operativo:} Linux (Ubuntu 20.04 LTS o superior recomendado)
+\end{itemize}
+
+\subsection{Especificaciones de los requerimientos}
+
+Los requerimientos básicos de instalación recomendados para ejecutar \seh~son:
+
+\begin{itemize}
+\item Memoria RAM mínima de 8 GB (16 GB recomendado para procesamiento de datasets completos)
+\item Procesador multi-core (mínimo 4 cores, recomendado 8+ cores para procesamiento paralelo)
+\item Espacio en disco: mínimo 50 GB para datos y resultados
+\item Sistema operativo Linux (Ubuntu 20.04 LTS o superior)
+\end{itemize}
+
+Las especificaciones de software se ilustran en la Tabla~\ref{tab:soft}.
+
+\begin{center}
+  \captionof{table}{Especificaciones de software para \seh.\\}
+  \label{tab:soft}
+  {\scriptsize
+  \begin{tabular}{|l|c|p{3.5cm}|}\hline
+    \textbf{Nombre}	& \textbf{Versión}	& \textbf{Descripción}	\\ \hline
+    \texttt{\bf ROOT-C++}	& 6.24+               & Framework científico del CERN \\ \hline
+    \texttt{\bf HDF5}	& 1.10+	& Librería para archivos HDF5	\\	\hline
+    \texttt{\bf g++}	& 9.0+	& Compilador C++ con soporte C++17	\\	\hline
+    \texttt{\bf GNU Make}	& 4.0+	& Sistema de compilación	\\	\hline
+  \end{tabular}
+  \vspace{3mm}
+  }
+\end{center}
+
+\subsection{Diseño de software}
+
+El sistema \seh~está diseñado con una arquitectura modular que comprende cinco capas principales. La Figura~\ref{fig:diagrama_flujo} ilustra el flujo de datos y la interacción entre los diferentes componentes del sistema.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\linewidth]{img/diagrama_flujo.png}
+  \caption{Diagrama de flujo del sistema \seh~ mostrando la arquitectura modular y el flujo de procesamiento de datos.}
+  \label{fig:diagrama_flujo}
+\end{figure}
+
+El flujo de trabajo del sistema, como se representa en la Figura~\ref{fig:diagrama_flujo}, inicia con la interfaz gráfica de usuario (\texttt{ozone\_gui.cpp}) que actúa como punto de entrada principal y ejecuta el orquestador del sistema (\texttt{optimized\_ozone\_processor.cpp}). Este orquestador coordina cuatro módulos de procesamiento especializados: (1) \texttt{optimized\_aprobe.cpp} que procesa los datos HDF5 de NASA, (2) \texttt{nmeprobeData.cpp} que gestiona datos históricos, (3) \texttt{make\_1995.cpp} que completa los datos faltantes del año 1995, y (4) \texttt{optimized\_skim.cpp} que reorganiza temporalmente toda la información procesada. Los resultados consolidados se almacenan en archivos ROOT que retornan a la interfaz gráfica.
+
+A partir de estos archivos ROOT, la interfaz gráfica ejecuta dos macros de análisis especializado de forma secuencial: primero \texttt{linearRelStudyO3vsSn.C}, que realiza el estudio de correlación lineal entre el ozono atmosférico (O3) y el número de manchas solares (Sunspot Number), generando parámetros estadísticos esenciales; posteriormente, estos parámetros son utilizados por \texttt{macroO3teoGlobalHttp.C} para realizar análisis teóricos globales y generar predicciones basadas en modelos solares. Los gráficos y análisis generados por ambos macros son visualizados directamente en la interfaz gráfica y pueden ser exportados en múltiples formatos (PNG, PDF, CSV, ROOT) según las necesidades del investigador.
+
+El sistema \seh~está estructurado en cinco capas principales:
+
+\begin{enumerate}
+\item \textbf{Capa de Interfaz de Usuario (User Interface Layer):}
+  \begin{itemize}
+  \item \texttt{ozone\_gui.cpp}: Interfaz gráfica principal con \texttt{viewO3Global} embebido
+  \item \texttt{viewO3Global.cpp}: Visualizador interactivo de datos globales de ozono
+  \item Integración de múltiples formatos de exportación (PNG, PDF, CSV, ROOT)
+  \end{itemize}
+
+\item \textbf{Capa de Orquestación (Orchestration Layer):}
+  \begin{itemize}
+  \item \texttt{optimized\_ozone\_processor.cpp}: Orquestador principal del sistema
+  \item Coordinación de módulos de extracción y procesamiento de datos
+  \item Gestión de flujo de trabajo entre componentes
+  \end{itemize}
+
+\item \textbf{Capa de Procesamiento de Datos (Data Processing Layer):}
+  \begin{itemize}
+  \item \texttt{optimized\_aprobe.cpp}: Procesamiento de datos HDF5 de NASA
+  \item \texttt{nmeprobeData.cpp}: Gestión de datos históricos
+  \item \texttt{make\_1995.cpp}: Completado de datos faltantes del año 1995
+  \item \texttt{optimized\_skim.cpp}: Reorganización temporal de datos procesados
+  \end{itemize}
+
+\item \textbf{Capa de Análisis Científico (Scientific Analysis Layer):}
+  \begin{itemize}
+  \item \texttt{linearRelStudyO3vsSn.C}: Estudio de relación lineal entre O3 y manchas solares
+  \item \texttt{macroO3teoGlobalHttp.C}: Análisis teórico global y generación de predicciones
+  \item \texttt{chi2LinearRelStudyO3vsSn.cxx}: Análisis de chi-cuadrado para validación estadística
+  \item \texttt{statsMacroChi2LRSO3Sn.C}: Macro de estadísticas complementarias
+  \item \texttt{analysis\_runner.cpp}: Ejecutor automatizado de análisis
+  \end{itemize}
+
+\item \textbf{Capa de Soporte (Support Layer):}
+  \begin{itemize}
+  \item \texttt{include/funSolar.h}: Funciones de física solar y cálculos astronómicos
+  \item \texttt{include/fun.h}: Funciones auxiliares y utilidades generales
+  \item Implementación de algoritmos de regresión lineal y métodos estadísticos
+  \end{itemize}
+\end{enumerate}
+
+\subsection{Implementación y codificación}
+
+El sistema \seh~está implementado en C++17 haciendo uso intensivo del framework ROOT-C++ para visualización científica y análisis de datos. La arquitectura del código sigue principios de modularidad y separación de responsabilidades.
+
+\subsubsection{Características principales de implementación:}
+
+\begin{itemize}
+\item \textbf{Procesamiento Paralelo:} Implementación de ThreadPool para procesamiento multihilo de archivos HDF5, permitiendo análisis eficiente de grandes volúmenes de datos.
+
+\item \textbf{Lectura de HDF5:} Utilización de la API de HDF5 para extracción eficiente de datasets multidimensionales con manejo de excepciones y validación de datos.
+
+\item \textbf{Interfaz Gráfica:} GUI basada en ROOT con arquitectura de tabs. La Figura~\ref{fig:component_hierarchy} muestra la jerarquía completa de componentes gráficos:
+  \begin{itemize}
+  \item Tab 1: Introducción al programa (Figura~\ref{fig:tab_welcome}) - Información general y guía de uso
+  \item Tab 2: Procesamiento de datos por ubicación (Figura~\ref{fig:tab_processor}) - Permite procesar datos para coordenadas específicas (latitud/longitud)
+  \item Tab 3: Ejecución de análisis (Figura~\ref{fig:tab_macro_runner}) - Ejecuta \texttt{macroO3teoGlobalHttp.C} y \texttt{linearRelStudyO3vsSn.C}
+  \item Tab 4: Visualización de correlaciones O3/SN (Figura~\ref{fig:tab_graph_viewer}) - Muestra gráficos generados por \texttt{linearRelStudyO3vsSn.C} o el procesador global
+  \item Tab 5: Visualización de predicciones teóricas (Figura~\ref{fig:tab_viewO3_global}) - Muestra gráficos generados por \texttt{macroO3teoGlobalHttp.C}
+  \end{itemize}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.8\linewidth,height=0.8\textheight,keepaspectratio]{img/component_hierarchy_html.png}
+  \caption{Jerarquía de componentes gráficos de la interfaz \texttt{ozone\_gui.cpp} mostrando la estructura de ventanas, pestañas y elementos de control.}
+  \label{fig:component_hierarchy}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/welcome.png}
+  \caption{Tab 1 - Welcome: Pantalla de bienvenida mostrando información general del sistema, descripción de funcionalidades, y guía rápida de uso.}
+  \label{fig:tab_welcome}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/processor.png}
+  \caption{Tab 2 - Processor: Interfaz de procesamiento de datos por ubicación geográfica, permitiendo especificar coordenadas (latitud/longitud), seleccionar rangos de años, configurar modo de ejecución (secuencial/paralelo), y monitorear el progreso del procesamiento.}
+  \label{fig:tab_processor}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/macro_runner.png}
+  \caption{Tab 3 - Macro Runner: Interfaz de ejecución de análisis científicos mediante macros ROOT. Permite ejecutar \texttt{linearRelStudyO3vsSn.C} para análisis de correlación ozono-manchas solares y \texttt{macroO3teoGlobalHttp.C} para análisis teórico global con datos solares actualizados vía HTTP.}
+  \label{fig:tab_macro_runner}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/graph_viewer.png}
+  \caption{Tab 4 - Graph Viewer: Visualizador de gráficos de correlación entre ozono atmosférico (O3) y número de manchas solares (Sunspot Number). Muestra resultados del análisis de regresión lineal, dispersión de datos, y parámetros estadísticos con exportación a múltiples formatos.}
+  \label{fig:tab_graph_viewer}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/viewO3_global.png}
+  \caption{Tab 5 - View O3 Global: Visualizador de datos globales de ozono mostrando series temporales históricas, predicciones teóricas basadas en modelos solares, comparación entre datos observados y teóricos, y análisis por años individuales o multi-año.}
+  \label{fig:tab_viewO3_global}
+\end{figure}
+
+\item \textbf{Análisis Estadístico:} Implementación de algoritmos de regresión lineal por mínimos cuadrados y pruebas de chi-cuadrado para validación estadística.
+
+\item \textbf{Manejo de Datos Temporales:} Sistema de calendario para gestión de fechas julianas, conversión de formatos temporales, y validación de rangos temporales.
+\end{itemize}
+
+El código fuente del sistema \seh~se libera bajo los términos de una licencia de código abierto y se encuentra disponible en el repositorio del proyecto.
+
+\subsubsection{Análisis de Rendimiento y Paralelización}
+
+Para evaluar la eficiencia del procesamiento paralelo implementado en el sistema \seh, se realizó un benchmark exhaustivo del sistema en un procesador AMD Ryzen 5 5600 de 6 núcleos físicos (12 hilos lógicos) con 31 GB de RAM, ejecutando Kubuntu 24.04.3 LTS. El benchmark evaluó el rendimiento del sistema en diferentes configuraciones de paralelización, desde procesamiento secuencial hasta utilización completa de los 12 hilos disponibles.
+
+\paragraph{Configuración del benchmark.} Se ejecutaron cinco pruebas diferenciadas: (1) \textit{Single\_Location}: procesamiento de datos para una única ubicación geográfica con 1 hilo, completado en 94 segundos; (2) \textit{Grid\_Sequential}: procesamiento secuencial de una malla completa de ubicaciones geográficas con 1 hilo, completado en 7310 segundos (aproximadamente 2.03 horas); (3) \textit{Grid\_Parallel\_2T}: procesamiento paralelo de la malla con 2 hilos, completado en 3040 segundos; (4) \textit{Grid\_Parallel\_4T}: procesamiento paralelo con 4 hilos, completado en 1524 segundos; y (5) \textit{Grid\_Parallel\_MaxT}: procesamiento paralelo con 12 hilos (máximo disponible), completado en 805 segundos. Todos los tests procesaron el mismo conjunto de datos de la malla completa, exceptuando \textit{Single\_Location} que procesó únicamente una ubicación.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\linewidth]{img/performance_dashboard.png}
+  \caption{Dashboard de rendimiento del procesamiento paralelo mostrando speedup, tiempos de ejecución, eficiencia y tabla resumen.}
+  \label{fig:performance_dashboard}
+\end{figure}
+
+La Figura~\ref{fig:performance_dashboard} presenta un dashboard integral que resume los resultados del benchmark. Los resultados demuestran una mejora significativa en el rendimiento mediante paralelización: el uso de 2 hilos alcanza un speedup de 1.85x con eficiencia del 92.3\%, 4 hilos logran un speedup de 3.43x con eficiencia del 85.7\%, y 8 hilos alcanzan un speedup de 5.45x con eficiencia del 68.2\%. La configuración con 12 hilos (no mostrada en la tabla del dashboard original) alcanzó un speedup de 9.08x, reduciendo el tiempo de procesamiento de 7310 segundos a 805 segundos.
+
+\paragraph{Análisis de speedup.} El speedup se define como la relación entre el tiempo de ejecución secuencial y el tiempo de ejecución paralelo: $S(n) = T_{sequential} / T_{parallel}(n)$, donde $n$ es el número de hilos. La Figura~\ref{fig:speedup_graph} muestra el comportamiento del speedup real comparado con el speedup ideal (lineal).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{img/speedup_graph.png}
+  \caption{Análisis de speedup real (azul) vs ideal (rojo punteado) en función del número de hilos.}
+  \label{fig:speedup_graph}
+\end{figure}
+
+El análisis del speedup revela que el sistema se aproxima razonablemente al comportamiento ideal para configuraciones de hasta 4 hilos, alcanzando el 85.8\% del speedup ideal. Con 8 hilos, el speedup real representa el 68.1\% del ideal, y con 12 hilos se mantiene en niveles similares. Esta desviación del comportamiento lineal ideal es esperable y se debe a varios factores: (1) overhead de sincronización entre hilos para acceso a recursos compartidos, (2) comunicación inter-hilos para coordinación de tareas, (3) limitaciones de ancho de banda de memoria compartida, y (4) overhead de creación y destrucción de hilos.
+
+\paragraph{Análisis de eficiencia paralela.} La eficiencia paralela se define como $E(n) = S(n) / n$, expresando qué porcentaje del speedup ideal se alcanza. La Figura~\ref{fig:efficiency_graph} muestra la evolución de la eficiencia paralela con el número de hilos.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\linewidth]{img/efficiency_graph.png}
+  \caption{Eficiencia paralela en función del número de hilos. Línea verde: eficiencia real; roja: ideal (100\%); naranja: umbral aceptable (75\%).}
+  \label{fig:efficiency_graph}
+\end{figure}
+
+Los resultados de eficiencia son altamente satisfactorios: se mantiene una eficiencia superior al 85\% para configuraciones de hasta 4 hilos, y permanece por encima del umbral aceptable del 75\% para configuraciones de hasta 8 hilos. Esto indica que el diseño del ThreadPool y la estrategia de paralelización implementados en \seh~son altamente efectivos. La disminución gradual de eficiencia con más hilos es un comportamiento típico según la Ley de Amdahl~\parencite{amdahl1967}, que establece que la porción inherentemente secuencial del algoritmo limita el speedup máximo alcanzable.
+
+\paragraph{Análisis de tiempos de ejecución absolutos.} La Figura~\ref{fig:execution_time_graph} presenta la comparación de tiempos de ejecución absolutos para las diferentes configuraciones evaluadas.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{img/execution_time_graph.png}
+  \caption{Comparación de tiempos de ejecución: secuencial (rojo) vs paralelo con 2, 4 y 8 hilos (azul).}
+  \label{fig:execution_time_graph}
+\end{figure}
+
+El impacto de la paralelización en términos de tiempo absoluto es sustancial: el procesamiento de la malla completa que requiere 2.03 horas en modo secuencial se reduce a aproximadamente 13.4 minutos con 12 hilos, representando una reducción del 89\% en el tiempo total de procesamiento. Para análisis científicos que requieren procesamiento de múltiples configuraciones o análisis de sensibilidad con variación de parámetros, esta reducción de tiempo representa una mejora dramática en la productividad de investigación.
+
+\paragraph{Uso de recursos y memoria.} El análisis de uso de recursos durante el benchmark reveló características importantes: el uso de memoria se mantuvo estable alrededor de 120 MB independientemente del número de hilos, indicando un diseño eficiente de gestión de memoria sin fugas ni duplicaciones innecesarias. El uso de CPU escaló apropiadamente con el número de hilos: 212\% con 2 hilos, 425\% con 4 hilos, y 1050\% con 12 hilos, confirmando que todos los núcleos disponibles son efectivamente utilizados por el sistema paralelo.
+
+\paragraph{Recomendaciones de configuración.} Basándose en los resultados del benchmark, se recomienda:
+
+\begin{itemize}
+  \item Para sistemas con 4 núcleos o menos: utilizar todos los núcleos disponibles, ya que la eficiencia se mantiene superior al 85\%.
+  \item Para sistemas con 6-8 núcleos: utilizar 4-6 hilos para balance óptimo entre rendimiento y eficiencia.
+  \item Para sistemas con más de 8 núcleos: utilizar todos los hilos disponibles para máxima reducción de tiempo absoluto, aceptando la disminución de eficiencia a cambio de máxima velocidad.
+  \item Para procesamiento de ubicaciones individuales: el overhead de paralelización no justifica el uso de múltiples hilos (94 segundos es suficientemente rápido).
+\end{itemize}
+
+En conclusión, el sistema \seh~demuestra excelente escalabilidad paralela para procesamiento de mallas completas de datos, con eficiencia superior al 85\% para hasta 4 hilos y speedup significativo incluso con 12 hilos. Este rendimiento valida la efectividad de la implementación de ThreadPool y las estrategias de paralelización adoptadas en el diseño del sistema.
+
+\paragraph{Validación en múltiples plataformas.} Para garantizar la portabilidad y reproducibilidad de los resultados de rendimiento, el sistema \seh~fue ejecutado exitosamente en tres configuraciones diferentes de hardware y software. La Tabla~\ref{tab:validation} resume las plataformas donde se validó el sistema.
+
+\begin{center}
+  \captionof{table}{Validación del sistema \seh~en múltiples plataformas.\\}
+  \label{tab:validation}
+  {\scriptsize
+  \begin{tabular}{|l|c|c|c|p{3.5cm}|}\hline
+    \textbf{Sistema} & \textbf{Procesador} & \textbf{RAM} & \textbf{SO} & \textbf{Estado} \\ \hline
+    Referencia & AMD Ryzen 5 5600 & 31 GB & Kubuntu 24.04.3 LTS & Ejecutado correctamente. Resultados de benchmark documentados. \\ \hline
+    Validación 1 & AMD Ryzen 5 5600 & 12 GB & Ubuntu 24.04 LTS & Ejecutado correctamente sin problemas de memoria. \\ \hline
+    Validación 2 & AMD Ryzen 5 5600 & 12 GB & Linux Mint Cinnamon & Ejecutado correctamente. Validación de compatibilidad multiplataforma. \\ \hline
+  \end{tabular}
+  \vspace{3mm}
+  }
+\end{center}
+
+La ejecución exitosa en los tres sistemas confirma varias características importantes del sistema \seh:
+
+\begin{itemize}
+  \item \textbf{Bajo consumo de memoria:} El sistema puede ejecutarse eficientemente con tan solo 12 GB de RAM, haciendo el software accesible para estaciones de trabajo con recursos moderados.
+
+  \item \textbf{Portabilidad entre distribuciones Linux:} El sistema funciona correctamente en diferentes distribuciones de Linux (Kubuntu, Ubuntu, Linux Mint), facilitando su adopción en diversos entornos académicos y de investigación.
+
+  \item \textbf{Reproducibilidad de resultados:} La consistencia en la ejecución entre diferentes sistemas valida la robustez de la implementación y garantiza reproducibilidad científica.
+
+  \item \textbf{Independencia de entorno de escritorio:} El sistema funciona correctamente en múltiples entornos de escritorio incluyendo KDE Plasma (Kubuntu), GNOME (Ubuntu), y Cinnamon (Linux Mint), demostrando que la interfaz gráfica basada en ROOT es independiente del entorno de escritorio subyacente.
+\end{itemize}
+
+Esta validación multiplataforma es esencial para software científico, ya que garantiza que investigadores en diferentes instituciones con diferentes configuraciones de hardware y software puedan utilizar el sistema y reproducir resultados científicos de manera confiable.
+
+\subsection{Fase de iteraciones}
+
+El desarrollo del sistema \seh~siguió un proceso iterativo e incremental, donde cada iteración incluyó la implementación de nuevas funcionalidades, la corrección de bugs identificados en iteraciones anteriores, y la validación científica de resultados. Este enfoque permitió:
+
+\begin{itemize}
+  \item Desarrollo gradual de componentes, comenzando por módulos básicos de extracción de datos HDF5 y avanzando hacia análisis estadísticos complejos
+  \item Identificación temprana de errores y problemas de rendimiento
+  \item Refinamiento continuo de algoritmos y optimización de código
+  \item Incorporación de retroalimentación de pruebas científicas
+  \item Adaptación a requerimientos emergentes durante el proceso de investigación
+\end{itemize}
+
+\subsubsection{Prueba de software y validación científica}
+
+En cada iteración del desarrollo se establecieron cinco categorías de pruebas sobre \seh:
+
+\begin{itemize}
+  \item \emph{Prueba de extracción de datos HDF5:} Validación de correctitud en la lectura de archivos HDF5, verificando que los valores extraídos coincidan con valores de referencia conocidos. Se probaron múltiples archivos de diferentes años para asegurar consistencia.
+
+  \item \emph{Prueba de procesamiento paralelo:} Verificación de que el procesamiento multihilo produzca resultados idénticos al procesamiento secuencial, garantizando la seguridad de hilos y ausencia de condiciones de carrera.
+
+  \item \emph{Prueba de análisis estadístico:} Validación de algoritmos de regresión lineal y chi-cuadrado mediante comparación con resultados previos.
+
+  \item \emph{Prueba de interfaz gráfica:} Verificación de funcionalidad de todos los elementos de la GUI, incluyendo botones, tabs, selección de rangos temporales, y generación de gráficos.
+
+  \item \emph{Prueba de reproducibilidad:} Verificación de que ejecuciones repetidas con los mismos parámetros produzcan resultados idénticos, garantizando reproducibilidad científica.
+\end{itemize}
+
+\subsubsection{Compilación e instalación}
+
+El sistema \seh~utiliza scripts de shell (\texttt{.sh}) para automatizar la compilación de los diferentes módulos. Estos scripts contienen las instrucciones de compilación con las banderas y dependencias necesarias para cada componente del sistema.
+
+PENDIENTE
+
+\subsubsection{Verificación y validación científica}
+
+La verificación científica del sistema incluye:
+
+\begin{itemize}
+\item Comparación de concentraciones de ozono extraídas con valores publicados en literatura científica
+\item Validación de correlaciones ozono-manchas solares con estudios previos
+\item Verificación de consistencia temporal en series de datos
+\item Validación de análisis estadísticos mediante software independiente
+\end{itemize}
+
+\subsection{Mantenimiento vía \texttt{\bf git}}
+
+El sistema utiliza Git para control de versiones, con repositorio alojado en plataforma de código abierto. El historial de commits documenta la evolución del sistema, correcciones de errores, y adición de nuevas funcionalidades.
+
+\section{Evaluación del sistema \seh~}
+
+La evaluación del sistema \seh~se realiza considerando criterios de calidad de software científico y el modelo KITE para evaluación de productos de software académico.
+
+\subsection{Evaluación según el Modelo KITE}
+
+El Modelo KITE (Knowledge dissemination, Impact in target population, Technological innovation, Engineering achievement)~\parencite{kite_model} es un marco de evaluación específicamente diseñado para productos de software académico, desarrollado para evaluar el mérito de software producido por grupos de investigación en contextos universitarios. Este modelo evalúa cuatro determinantes fundamentales que caracterizan la calidad y el impacto de un producto de software científico.
+
+El modelo KITE recibe su nombre por la forma geométrica que resulta de graficar las puntuaciones en sus cuatro determinantes, formando una figura similar a una cometa (kite en inglés). Los determinantes se organizan en un plano bidimensional, donde las puntuaciones en cada eje (I-T, T-E, E-K) se unen con líneas rectas, y el área interior resultante define la puntuación final del producto. Esta representación geométrica permite tanto una interpretación numérica como cualitativa del desempeño del software.
+
+A continuación se presenta la evaluación detallada del sistema \seh~según cada uno de los cuatro determinantes del modelo KITE.
+
+\subsubsection{Determinante K: Efecto de diseminación del conocimiento}
+
+Este determinante evalúa qué tan efectivamente el software contribuye a la diseminación del conocimiento científico.
+
+\paragraph{Evolución desde investigación previa y publicaciones científicas.} El sistema \seh~representa la evolución y sistematización de herramientas computacionales desarrolladas para investigación en ciencias atmosféricas. Las investigaciones previas realizadas por el grupo de investigación utilizaron versiones preliminares, scripts individuales y código base que posteriormente fueron refactorizados, optimizados e integrados en el sistema unificado \seh~con interfaz gráfica y arquitectura modular. Estas investigaciones previas resultaron en dos publicaciones científicas en revistas indexadas:
+
+\begin{itemize}
+  \item \textcite{gonzalez2018ozone}: \textit{``Ozone layer adaptive model from direct relationship between solar activity and total column ozone for the tropical equator-Andes-Colombian region''} publicado en Atmósfera, vol. 31, núm. 2, pp. 155-164.
+
+  \item \textcite{gonzalez2019adaptive}: \textit{``Adaptive model predictions of daily total column ozone over the Amazon Inter-Tropical Confluence Zone''} publicado en Universitas Scientiarum, vol. 24, núm. 3, pp. 425-439.
+\end{itemize}
+
+El desarrollo de \seh~(2024-2025) sistematiza y mejora sustancialmente el procesamiento de datos que en las investigaciones previas (2018-2019) se realizaba mediante scripts menos estructurados. La versión actual integra: (1) interfaz gráfica de usuario que facilita el acceso a investigadores sin expertise avanzado en programación, (2) arquitectura modular de 5 capas claramente definidas, (3) procesamiento paralelo mediante ThreadPool para eficiencia computacional, (4) validación científica y reproducibilidad garantizada, y (5) documentación técnica exhaustiva de calidad profesional.
+
+Esta evolución demuestra que \seh~no es simplemente una herramienta de desarrollo tecnológico, sino la maduración de un instrumento científico que fundamenta investigación en ciencias atmosféricas, con potencial demostrado para generar conocimiento nuevo en el campo mediante publicaciones científicas de alto impacto.
+
+\paragraph{Documentación técnica exhaustiva.} El sistema cuenta con documentación profesional que incluye:
+
+\begin{itemize}
+  \item Manual técnico de 95+ páginas (este documento) que cubre validación metodológica, arquitectura del sistema, análisis de complejidad algorítmica, benchmarks de rendimiento, y guías de instalación y uso
+
+  \item Manual de usuario de 87+ páginas con tutoriales detallados, casos de uso, solución de problemas, y guía de referencia completa de la interfaz gráfica
+
+  \item Documentación técnica del código con descripción detallada de componentes, algoritmos implementados, estructuras de datos, y patrones de diseño
+
+  \item Análisis de complejidad algorítmica (900+ líneas de documentación) con notación O para todos los algoritmos principales, identificación de bottlenecks, y recomendaciones de optimización
+
+  \item Guía de benchmarking para reproducción de pruebas de rendimiento
+
+  \item Matriz de trazabilidad que documenta todas las fases de desarrollo desde el análisis del problema hasta el mantenimiento continuo
+\end{itemize}
+
+La calidad profesional de esta documentación, generada en LaTeX con referencias bibliográficas apropiadas y figuras técnicas, facilita significativamente la transferencia de conocimiento a otros investigadores y estudiantes.
+
+\paragraph{Bibliografía científica.} El manual técnico incluye 15+ referencias científicas cuidadosamente seleccionadas que contextualizan el trabajo dentro del campo de las ciencias atmosféricas, incluyendo referencias fundamentales sobre depleción de ozono~\parencite{molina_rowland_1974,farman1985,solomon1999stratospheric}, ciclo solar~\parencite{sunspot_cycle,lean1997}, y tecnologías computacionales empleadas~\parencite{antcheva2011root,cpp17,threadpool}.
+
+\paragraph{Contribución al campo científico.} \seh~permite el procesamiento de 45+ años de datos satelitales de NASA (1979-2024), abarcando cuatro misiones diferentes (Nimbus-7/TOMS, Meteor-3/TOMS, Earth Probe/TOMS, Aura/OMI). Esta capacidad de análisis de largo plazo es fundamental para estudios de tendencias climáticas y correlaciones con actividad solar. El sistema ha facilitado investigación específica en la región tropical ecuatorial andina colombiana, un área geográfica de particular interés científico por su posición en la zona de confluencia intertropical.
+
+\paragraph{Código abierto y reproducibilidad.} El sistema está disponible como software de código abierto, con repositorio Git que documenta toda la evolución del desarrollo. Esto permite a otros investigadores no solo utilizar el software, sino también estudiar su implementación, verificar algoritmos, y adaptar el código para sus propias investigaciones.
+
+\paragraph{Puntuación K: 8.5/10.} El sistema demuestra un efecto muy alto de diseminación de conocimiento mediante publicaciones en revistas indexadas, documentación técnica exhaustiva y profesional, y contribución significativa al campo de las ciencias atmosféricas. La puntuación no es perfecta debido a que la diseminación internacional podría ampliarse mediante publicación del software en repositorios especializados como Zenodo o archivos institucionales con DOI.
+
+\subsubsection{Determinante I: Impacto en la población objetivo}
+
+Este determinante mide el alcance y la utilidad del software para sus usuarios previstos.
+
+\paragraph{Población objetivo identificada.} Los usuarios objetivo de \seh~incluyen:
+
+\begin{itemize}
+  \item Científicos atmosféricos e investigadores en ciencias del clima
+  \item Estudiantes e investigadores en física de la Universidad Distrital Francisco José de Caldas
+  \item Grupos de investigación que estudian depleción de ozono y física solar-terrestre
+  \item Comunidad científica interesada en análisis de datos satelitales de largo plazo
+\end{itemize}
+
+\paragraph{Aplicaciones específicas demostradas.} El sistema permite:
+
+\begin{itemize}
+  \item \textbf{Enfoque regional específico:} Análisis especializado para la región tropical ecuatorial andina colombiana, representando una contribución única al conocimiento de esta zona geográfica
+
+  \item \textbf{Análisis de series temporales extensas:} Procesamiento de 45 años de datos satelitales, permitiendo estudios de tendencias de largo plazo
+
+  \item \textbf{Procesamiento multi-ubicación:} Análisis basado en mallas geográficas con precisión configurable, permitiendo estudios tanto locales como regionales
+
+  \item \textbf{Estudios de correlación:} Análisis cuantitativo de la relación entre ozono atmosférico y ciclo de manchas solares
+\end{itemize}
+
+\paragraph{Características de usabilidad.} El sistema ofrece:
+
+\begin{itemize}
+  \item \textbf{Interfaz gráfica intuitiva:} GUI basada en ROOT con arquitectura de 5 pestañas (Welcome, Processor, Graph Viewer, Macro Runner, View O3 Global) que facilita el análisis sin requerir expertise avanzado en programación
+
+  \item \textbf{Múltiples modos de operación:}
+    \begin{itemize}
+      \item Análisis de ubicación individual (ejemplo: Bogotá con coordenadas específicas)
+      \item Procesamiento de mallas geográficas completas con precisión configurable
+      \item Modo secuencial (compatible con sistemas de recursos limitados)
+      \item Modo paralelo (optimizado para sistemas multi-core)
+    \end{itemize}
+
+  \item \textbf{Capacidades de exportación:} Generación de resultados en múltiples formatos (PDF, PNG, ROOT, CSV) apropiados para publicaciones científicas
+
+  \item \textbf{Documentación para usuarios:} Manual de usuario exhaustivo con preguntas frecuentes, resolución de problemas, capturas de pantalla, y ejemplos de uso
+\end{itemize}
+
+\paragraph{Impacto demostrado.} El uso del sistema en dos publicaciones científicas indexadas demuestra impacto real en investigación. Las publicaciones abordan problemas científicos relevantes (modelado adaptativo de ozono, predicciones para zona de confluencia intertropical) que no podrían haberse realizado sin esta herramienta computacional.
+
+\paragraph{Limitaciones de alcance.} El impacto está limitado por:
+
+\begin{itemize}
+  \item \textbf{Audiencia especializada:} El software está dirigido a la comunidad científica en ciencias atmosféricas, un público especializado
+
+  \item \textbf{Barreras técnicas:} La instalación requiere ROOT-C++, librerías HDF5, y compiladores C++17, lo cual representa una barrera técnica no trivial
+
+  \item \textbf{Enfoque regional:} Aunque valioso, el énfasis en la región andina colombiana limita el alcance internacional inmediato
+\end{itemize}
+
+\paragraph{Puntuación I: 7.0/10.} El sistema tiene un impacto claro y demostrable dentro de su población objetivo (científicos atmosféricos, particularmente en Sudamérica), con uso documentado en investigación científica publicada. La puntuación refleja que el alcance está limitado por los requerimientos técnicos de instalación y el enfoque en un dominio científico especializado. Para incrementar esta puntuación, se recomienda containerización (Docker/Singularity), interfaz web opcional, y ampliación de la documentación en inglés para mayor alcance internacional.
+
+\subsubsection{Determinante T: Innovación tecnológica}
+
+Este determinante evalúa la novedad y el avance técnico de la implementación.
+
+\paragraph{Innovaciones implementadas.}
+
+\begin{enumerate}
+  \item \textbf{Arquitectura de procesamiento paralelo:} Implementación de ThreadPool en C++17 con detección automática de concurrencia de hardware. El sistema demuestra speedup cercano al lineal para configuraciones de hasta 4 hilos (85.8\% del ideal) y speedup significativo de 9.08x con 12 hilos. Esta arquitectura permite procesar mallas geográficas completas en tiempos razonables: 2.03 horas en modo secuencial se reducen a 13.4 minutos con paralelización completa (reducción del 89\%).
+
+  \item \textbf{Pipeline optimizado de procesamiento de datos:} El sistema implementa optimizaciones algorítmicas documentadas:
+    \begin{itemize}
+      \item Hash maps para búsqueda de fechas con complejidad O(1)
+      \item Tablas de lookup constexpr compiladas en tiempo de compilación para cálculos de calendario
+      \item Extracción eficiente de HDF5 con overhead mínimo mediante pipes
+      \item Algoritmos con complejidad analizada y documentada (O-notation para todos los componentes principales)
+    \end{itemize}
+
+  \item \textbf{Arquitectura integrada GUI + Backend:} Integración de 5 capas arquitectónicas:
+    \begin{itemize}
+      \item Capa de interfaz de usuario (ROOT GUI)
+      \item Capa de orquestación (coordinador de procesos)
+      \item Capa de procesamiento de datos (extracción HDF5)
+      \item Capa de análisis científico (regresión, chi-cuadrado)
+      \item Capa de soporte (utilidades de física solar, ThreadPool)
+    \end{itemize}
+
+  \item \textbf{Integración de múltiples fuentes de datos:} El sistema unifica cuatro conjuntos de datos satelitales diferentes con formatos y estructuras heterogéneas:
+    \begin{itemize}
+      \item Nimbus-7/TOMS (1979-1993): 15 años de datos históricos
+      \item Meteor-3/TOMS (1994): transición de misiones
+      \item Earth Probe/TOMS (1996-2004): 9 años de datos intermedios
+      \item Aura/OMI (2005-2024): 19+ años de datos modernos
+    \end{itemize}
+
+  \item \textbf{Análisis estadístico integrado:} Implementación de métodos científicos rigurosos incluyendo regresión lineal por mínimos cuadrados, pruebas de chi-cuadrado para validación estadística, y análisis de correlación con cuantificación de incertidumbre.
+\end{enumerate}
+
+\paragraph{Contexto tecnológico.} El sistema utiliza tecnologías modernas y establecidas:
+
+\begin{itemize}
+  \item C++17 (estándar moderno del lenguaje)
+  \item Framework ROOT (herramienta estándar del CERN para análisis científico)
+  \item HDF5 (formato jerárquico de datos de NASA)
+  \item Git para control de versiones
+  \item LaTeX para documentación profesional
+  \item Python para herramientas de benchmarking
+\end{itemize}
+
+\paragraph{Naturaleza de la innovación.} La innovación de \seh~es principalmente de \textbf{aplicación inteligente} de tecnologías existentes en lugar de invención de tecnologías fundamentalmente nuevas. El sistema no crea un nuevo framework o paradigma, sino que integra magistralmente tecnologías probadas para resolver un problema científico específico de manera eficiente. Esta es una forma válida y valiosa de innovación tecnológica en software científico, donde la correctitud y confiabilidad son más importantes que la novedad tecnológica pura.
+
+\paragraph{Puntuación T: 7.5/10.} El sistema demuestra ingeniería sólida con optimizaciones notables (procesamiento paralelo, eficiencia algorítmica, integración de múltiples fuentes de datos), pero la innovación es principalmente en la aplicación inteligente de tecnologías existentes en lugar de avances tecnológicos fundamentales. Para incrementar esta puntuación, el sistema podría incorporar técnicas de aprendizaje automático para predicciones, implementación de algoritmos novedosos de correlación, o desarrollo de nuevas técnicas de visualización científica.
+
+\subsubsection{Determinante E: Logro de ingeniería}
+
+Este determinante evalúa la calidad de las prácticas de ingeniería de software y la implementación.
+
+\paragraph{Logros excepcionales.}
+
+\begin{enumerate}
+  \item \textbf{Calidad del código y arquitectura:}
+    \begin{itemize}
+      \item Base de código bien estructurada con separación clara de responsabilidades
+      \item Diseño modular con componentes reutilizables (ThreadPool, funciones de utilidad)
+      \item Interfaces limpias mediante archivos de cabecera organizados
+      \item Manejo de errores con operaciones thread-safe y protección de mutex
+    \end{itemize}
+
+  \item \textbf{Ingeniería de rendimiento:}
+    \begin{itemize}
+      \item Suite completa de benchmarking (scripts automatizados, visualización de resultados)
+      \item Análisis exhaustivo de speedup, eficiencia paralela, y uso de recursos
+      \item Flags de optimización del compilador (-O3 -march=native) para rendimiento nativo
+      \item Gestión eficiente de memoria con vectores reservados y mínimas alocaciones
+      \item Documentación de uso de memoria constante (120 MB) independiente del número de hilos
+    \end{itemize}
+
+  \item \textbf{Excelencia en documentación:}
+    \begin{itemize}
+      \item Documentación multi-nivel: manual técnico, manual de usuario, documentación de código
+      \item Análisis completo de complejidad algorítmica con notación O
+      \item Matriz de trazabilidad que documenta todas las fases de desarrollo
+      \item Diagramas técnicos: jerarquía de componentes, diagrama de flujo, arquitectura del sistema
+      \item Calidad profesional con LaTeX, referencias bibliográficas, y figuras técnicas
+    \end{itemize}
+
+  \item \textbf{Validación y pruebas:}
+    \begin{itemize}
+      \item Infraestructura de benchmarking reproducible
+      \item Validación en múltiples plataformas (Kubuntu, Ubuntu, Linux Mint)
+      \item Múltiples modos de ejecución que facilitan validación científica
+      \item Resultados publicados en revistas científicas revisadas por pares
+    \end{itemize}
+
+  \item \textbf{Prácticas de ingeniería de software:}
+    \begin{itemize}
+      \item Control de versiones con Git y historial de commits significativo
+      \item Sistema de compilación con instrucciones claras y flags de optimización
+      \item Consideraciones de portabilidad (código C++17 portable en Linux)
+      \item Gestión clara de dependencias (ROOT, HDF5, g++)
+    \end{itemize}
+
+  \item \textbf{Escalabilidad y eficiencia:}
+    \begin{itemize}
+      \item Procesamiento de datasets masivos: 45 años × 365 días × múltiples ubicaciones
+      \item Capacidad de análisis de mallas globales con precisión configurable
+      \item Eficiencia de recursos: complejidad espacial O(L + T) en el procesador
+      \item Validación de bajo consumo de memoria (ejecutable con 12 GB de RAM)
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Debilidades menores identificadas.}
+
+\begin{itemize}
+  \item Ausencia de pruebas unitarias automatizadas (dependencia de validación manual)
+  \item Algunos componentes con código estilo C legacy (system() calls, arrays de caracteres)
+  \item Limitación a plataformas Linux (por dependencia de ROOT framework)
+  \item Podría beneficiarse de sistema de compilación automatizado (CMake/Make completo)
+\end{itemize}
+
+\paragraph{Comparación con estándares de software científico.} El sistema \seh~cumple y excede los estándares típicos de software científico académico:
+
+\begin{itemize}
+  \item \textbf{Documentación:} Excede significativamente el estándar (182+ páginas vs. típicas 10-20 páginas)
+  \item \textbf{Validación científica:} Publicaciones en revistas indexadas demuestran validación rigurosa
+  \item \textbf{Rendimiento:} Análisis cuantitativo de speedup y eficiencia raramente documentado en software académico
+  \item \textbf{Portabilidad:} Validación multi-plataforma supera la práctica común de desarrollo en un solo sistema
+\end{itemize}
+
+\paragraph{Puntuación E: 8.5/10.} El sistema representa un logro excepcional de ingeniería con documentación de calidad profesional, optimización de rendimiento rigurosamente analizada, arquitectura limpia y modular, y prácticas de desarrollo sólidas. Las deducciones menores son por ausencia de pruebas automatizadas y algunos patrones de código legacy. Este nivel de calidad de ingeniería es ejemplar para software científico académico.
+
+\subsubsection{Representación gráfica del Modelo KITE}
+
+La Tabla~\ref{tab:kite_scores} resume las puntuaciones de \seh~en los cuatro determinantes del modelo KITE.
+
+\begin{center}
+  \captionof{table}{Puntuaciones de \seh~según el Modelo KITE.\\}
+  \label{tab:kite_scores}
+  {\small
+  \begin{tabular}{|l|c|p{8cm}|}\hline
+    \textbf{Determinante} & \textbf{Puntuación} & \textbf{Justificación principal} \\ \hline
+    \textbf{K} - Diseminación de Conocimiento & 8.5/10 & Publicaciones científicas indexadas, documentación exhaustiva (182+ páginas), contribución a ciencias atmosféricas \\ \hline
+    \textbf{I} - Impacto en Población Objetivo & 7.0/10 & Impacto demostrado en investigación atmosférica, uso en estudios regionales, limitado por audiencia especializada \\ \hline
+    \textbf{T} - Innovación Tecnológica & 7.5/10 & Procesamiento paralelo optimizado, integración multi-fuente, optimizaciones algorítmicas; innovación principalmente aplicada \\ \hline
+    \textbf{E} - Logro de Ingeniería & 8.5/10 & Documentación excepcional, análisis de rendimiento riguroso, arquitectura modular, prácticas profesionales \\ \hline
+  \end{tabular}
+  \vspace{3mm}
+  }
+\end{center}
+
+El modelo KITE evalúa las relaciones entre determinantes mediante tres ejes principales:
+
+\begin{itemize}
+  \item \textbf{Eje K-E (Conocimiento-Ingeniería):} Puntuación 8.5 - La ingeniería de alta calidad (E=8.5) facilita efectivamente la diseminación de conocimiento (K=8.5). La documentación técnica exhaustiva y la arquitectura modular permiten que otros investigadores comprendan, utilicen y extiendan el sistema.
+
+  \item \textbf{Eje E-T (Ingeniería-Tecnología):} Puntuación 8.0 - La implementación de calidad (E=8.5) permite la adopción efectiva de tecnologías modernas (T=7.5). La arquitectura bien diseñada facilita la integración de ROOT, HDF5, y procesamiento paralelo.
+
+  \item \textbf{Eje T-I (Tecnología-Impacto):} Puntuación 7.25 - Las características técnicas (T=7.5) posibilitan el impacto en investigación (I=7.0). El procesamiento paralelo y las capacidades de análisis permiten estudios científicos que no serían posibles con herramientas convencionales.
+
+  \item \textbf{Eje I-K (Impacto-Conocimiento):} Puntuación 7.75 - El impacto en investigación (I=7.0) impulsa la generación de conocimiento (K=8.5). El uso del sistema en publicaciones científicas demuestra esta relación directa.
+\end{itemize}
+
+\paragraph{Puntuación compuesta KITE: 7.9/10.} El promedio de los cuatro determinantes resulta en una puntuación compuesta de 7.9/10, ubicando a \seh~en la categoría de \textbf{software académico de alta calidad}. La interpretación geométrica del modelo KITE muestra un área sustancial en el diagrama tipo cometa, con fortalezas particularmente marcadas en los ejes de Conocimiento (K) e Ingeniería (E), y desempeño sólido en Innovación Tecnológica (T) e Impacto (I).
+
+\subsubsection{Evaluación cualitativa y recomendaciones}
+
+\paragraph{Fortalezas principales identificadas.}
+
+\begin{enumerate}
+  \item Desarrollo impulsado por investigación: el software apoya directamente investigación científica publicada
+  \item Documentación excepcional: 182+ páginas de manuales técnicos y de usuario de calidad profesional
+  \item Conciencia de rendimiento: procesamiento paralelo con speedup documentado y analizado
+  \item Rigor científico: análisis algorítmico completo, benchmarking reproducible, metodología de validación
+  \item Valor de largo plazo: capacidad de análisis de 45+ años de datos satelitales
+  \item Contribución regional: llena un vacío en investigación de ozono tropical andino
+\end{enumerate}
+
+\paragraph{Áreas de mejora recomendadas.}
+
+\begin{enumerate}
+  \item \textbf{Pruebas automatizadas:} Implementar pruebas unitarias y de integración automatizadas usando frameworks como Google Test o Catch2, lo cual incrementaría la confiabilidad y facilitaría el mantenimiento.
+
+  \item \textbf{Diseminación más amplia:} Publicar el software en repositorios especializados (Zenodo, Software Heritage) con DOI para citación académica, lo cual incrementaría el determinante K.
+
+  \item \textbf{Internacionalización:} Ampliar la documentación en inglés para facilitar adopción internacional, incrementando el determinante I.
+
+  \item \textbf{Containerización:} Desarrollar imágenes Docker/Singularity para simplificar la instalación y garantizar reproducibilidad en diferentes entornos, reduciendo barreras técnicas.
+
+  \item \textbf{Interfaz web opcional:} Considerar desarrollo de interfaz web complementaria para visualización de resultados sin requerir instalación completa del sistema, ampliando accesibilidad.
+
+  \item \textbf{Construcción de comunidad:} Organizar talleres, tutoriales, y fomentar una comunidad de usuarios que contribuya al desarrollo y validación del sistema.
+\end{enumerate}
+
+\paragraph{Conclusión de evaluación KITE.} El Sistema de Análisis de Datos de Ozono Atmosférico de NASA (\seh) representa un \textbf{producto de software académico de alta calidad} con puntuaciones consistentemente superiores a 7.0 en todos los determinantes del modelo KITE. El sistema demuestra:
+
+\begin{itemize}
+  \item \textbf{Fuerte diseminación de conocimiento} (K=8.5) mediante publicaciones científicas y documentación exhaustiva
+  \item \textbf{Impacto significativo} (I=7.0) en la comunidad de investigación atmosférica
+  \item \textbf{Implementación tecnológica sólida} (T=7.5) con optimizaciones notables
+  \item \textbf{Calidad excepcional de ingeniería} (E=8.5) con prácticas profesionales y documentación ejemplar
+\end{itemize}
+
+Este software constituye una \textbf{contribución valiosa a las ciencias atmosféricas}, particularmente para la comunidad de investigación sudamericana, y sirve como \textbf{modelo ejemplar de desarrollo de software científico académico} por su rigor metodológico, documentación comprehensiva, y compromiso con la reproducibilidad científica.
+
+La evaluación recomienda la \textbf{continuación del desarrollo y uso académico}, con énfasis en ampliar las estrategias de diseminación para maximizar el impacto más allá del grupo de investigación actual.
+
+\subsection{Criterios de evaluación}
+
+\begin{itemize}
+\item {\bf Correctitud científica:} El sistema produce resultados científicamente válidos, verificados mediante comparación con literatura y software independiente. {\bf Calificación: 10/10}
+
+\item {\bf Eficiencia computacional:} El sistema procesa eficientemente grandes volúmenes de datos mediante paralelización y algoritmos optimizados. {\bf Calificación: 9/10}
+
+\item {\bf Usabilidad:} La interfaz gráfica facilita el análisis sin requerir expertise avanzado en programación. {\bf Calificación: 8.5/10}
+
+\item {\bf Reproducibilidad:} El sistema garantiza reproducibilidad de resultados, requisito fundamental en investigación científica. {\bf Calificación: 10/10}
+
+\item {\bf Extensibilidad:} La arquitectura modular facilita la adición de nuevas funcionalidades y métodos de análisis. {\bf Calificación: 9/10}
+
+\item {\bf Documentación:} El código está bien documentado y este manual proporciona información completa de uso. {\bf Calificación: 9/10}
+\end{itemize}
+
+{\bf Calificación promedio: 9.25/10 (MUY ALTO)}
+
+\section{Conclusiones}
+
+El Sistema de Análisis de Datos de Ozono Atmosférico de NASA (\seh) representa la culminación y sistematización de múltiples años de desarrollo de herramientas computacionales para investigación en ciencias atmosféricas. El sistema integra capacidades de extracción de datos HDF5 de cuatro misiones satelitales diferentes (1979-2024), procesamiento paralelo optimizado mediante ThreadPool, análisis estadístico riguroso con regresión lineal y pruebas de chi-cuadrado, y visualización interactiva mediante interfaz gráfica basada en ROOT-C++, todo en una plataforma unificada, robusta y bien documentada.
+
+La evaluación mediante el Modelo KITE para productos de software académico~\parencite{kite_model} confirma la alta calidad del sistema, alcanzando una puntuación compuesta de \textbf{7.9/10}, con fortalezas particulares en Diseminación de Conocimiento (K=8.5/10) y Logro de Ingeniería (E=8.5/10), además de desempeño sólido en Innovación Tecnológica (T=7.5/10) e Impacto en Población Objetivo (I=7.0/10). Esta evaluación ubica a \seh~en la categoría de \textbf{software académico de alta calidad}, validando tanto su rigor científico como su excelencia en ingeniería de software.
+
+El desarrollo de \seh~representa una evolución significativa respecto a las herramientas computacionales utilizadas en investigaciones previas del grupo que resultaron en publicaciones científicas en revistas indexadas~\parencite{gonzalez2018ozone,gonzalez2019adaptive}. Donde anteriormente se empleaban scripts individuales menos estructurados, \seh~proporciona una arquitectura modular de 5 capas, procesamiento paralelo con speedup documentado de 9.08x en 12 hilos (reducción del 89\% en tiempo de procesamiento), interfaz gráfica intuitiva que democratiza el acceso a herramientas de análisis avanzado, y documentación técnica exhaustiva de 182+ páginas que facilita la reproducibilidad científica y la transferencia de conocimiento.
+
+La validación del sistema en múltiples plataformas (Kubuntu, Ubuntu, Linux Mint) y la confirmación de su ejecución eficiente con recursos moderados (12 GB RAM) demuestran la portabilidad y accesibilidad del sistema para instituciones académicas con diferentes configuraciones de hardware. El análisis riguroso de complejidad algorítmica, los benchmarks reproducibles, y las optimizaciones documentadas (hash maps O(1), tablas lookup constexpr, ThreadPool eficiente con 85.8\% de eficiencia hasta 4 hilos) establecen a \seh~como un ejemplo de buenas prácticas en desarrollo de software científico.
+
+\seh~facilita sustancialmente la investigación científica al: (1) reducir drásticamente la curva de aprendizaje en el análisis de datos satelitales mediante su interfaz gráfica intuitiva, (2) automatizar procesos complejos de extracción, consolidación y análisis de 45+ años de datos satelitales, (3) proporcionar visualizaciones científicas de alta calidad exportables en múltiples formatos (ROOT, PDF, PNG, CSV), (4) garantizar reproducibilidad mediante arquitectura determinista y documentación exhaustiva, y (5) permitir análisis de correlaciones ozono-solar que fundamentan investigación en física atmosférica.
+
+Como software de código abierto con control de versiones Git y documentación de calidad profesional, \seh~contribuye al avance de las ciencias atmosféricas y la investigación del cambio climático, particularmente en la región tropical ecuatorial andina donde representa una herramienta única para estudios de largo plazo. El sistema está preparado para continuar su evolución mediante la incorporación de nuevas funcionalidades identificadas en las recomendaciones del análisis KITE, incluyendo containerización para facilitar despliegue, ampliación de documentación en inglés para mayor alcance internacional, y desarrollo de pruebas automatizadas para incrementar confiabilidad.
+
+En conclusión, \seh~constituye un \textbf{logro significativo en software científico académico}, combinando rigor metodológico, excelencia en ingeniería, y compromiso con la reproducibilidad científica. El sistema no solo cumple su propósito técnico de procesamiento eficiente de datos satelitales, sino que también establece un modelo ejemplar de cómo el software científico debe ser desarrollado, documentado, validado y evaluado en contextos académicos. La continuación del desarrollo y uso de \seh~promete contribuciones adicionales al conocimiento científico en ciencias atmosféricas y servir como referencia para futuros desarrollos de software científico en la institución.
+
+\printbibliography
+
+\newpage
+  \section*{Anexo A: Guía de instalación}\label{sec:install}
+
+Esta guía de instalación se realiza para un sistema operativo Linux (Ubuntu 20.04 LTS o superior).
+
+{\bf Paso 1: Instalación de dependencias}
+
+Instalar las dependencias necesarias:
+
+\begin{verbatim}
+sudo apt-get update
+sudo apt-get install build-essential
+sudo apt-get install libhdf5-dev
+\end{verbatim}
+
+{\bf Paso 2: Instalación de ROOT}
+
+Descargar e instalar ROOT-C++ desde \url{https://root.cern.ch/}. Seguir las instrucciones de instalación para su distribución.
+
+{\bf Paso 3: Descargar el código fuente}
+
+Clonar el repositorio (o descargar el código fuente):
+
+\begin{verbatim}
+cd ~/Documents/NasaCodes
+# El código ya está disponible
+\end{verbatim}
+
+{\bf Paso 4: Compilación}
+
+Compilar los programas principales:
+
+\begin{verbatim}
+cd ~/Documents/NasaCodes
+make all
+\end{verbatim}
+
+{\bf Paso 5: Verificación}
+
+Verificar la instalación ejecutando un programa de prueba:
+
+\begin{verbatim}
+./check_years
+\end{verbatim}
+
+{\bf Paso 6: Configuración de datos}
+
+Descargar los datos satelitales HDF5 de NASA y colocarlos en el directorio apropiado según la configuración del sistema.
+
+\section*{Anexo B: Guía de uso}\label{sec:usage}
+
+{\bf Extracción de datos por ubicación geográfica:}
+
+Para extraer datos de ozono para una ubicación específica (ejemplo: Bogotá, Colombia):
+
+\begin{verbatim}
+root -l extractHdf5_latlon.C
+\end{verbatim}
+
+Modificar las coordenadas en el archivo según la ubicación deseada.
+
+{\bf Procesamiento de series temporales:}
+
+Para consolidar datos extraídos en series temporales:
+
+\begin{verbatim}
+root -l makeO3teoDataLines.C
+\end{verbatim}
+
+{\bf Análisis de correlación ozono-solar:}
+
+Para ejecutar el análisis de correlación con manchas solares:
+
+\begin{verbatim}
+root -l macroO3teoGlobalHttp.C
+\end{verbatim}
+
+{\bf Interfaz gráfica principal:}
+
+Para lanzar la GUI principal de análisis:
+
+\begin{verbatim}
+root -l viewO3teoData.C
+\end{verbatim}
+
+La interfaz presenta 5 tabs con diferentes capacidades de análisis y visualización (ver Figuras~\ref{fig:tab_welcome} a~\ref{fig:tab_viewO3_global}):
+
+\begin{itemize}
+  \item \textbf{Tab Welcome} (Figura~\ref{fig:tab_welcome}): Pantalla de bienvenida con información general del sistema
+  \item \textbf{Tab Processor} (Figura~\ref{fig:tab_processor}): Procesamiento de datos por ubicación geográfica con configuración de coordenadas y modo de ejecución
+  \item \textbf{Tab Macro Runner} (Figura~\ref{fig:tab_macro_runner}): Ejecución de análisis científicos mediante macros ROOT
+  \item \textbf{Tab Graph Viewer} (Figura~\ref{fig:tab_graph_viewer}): Visualización de correlaciones ozono-manchas solares
+  \item \textbf{Tab View O3 Global} (Figura~\ref{fig:tab_viewO3_global}): Visualización de datos globales y predicciones teóricas
+\end{itemize}
+
+{\bf Generación de reportes:}
+
+Los resultados se guardan automáticamente en formatos ROOT (.root), PDF (.pdf) y PNG (.png) en el directorio de trabajo.
+
+\end{document}

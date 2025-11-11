@@ -1,0 +1,373 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{apa/apasortcite//global/global}
+    \entry{antcheva2011root}{article}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{10}{}{%
+        {{un=0,uniquepart=base,hash=8362902a25b786636681bd25f8dae822}{%
+           family={Antcheva},
+           familyi={A\bibinitperiod},
+           given={Ilka},
+           giveni={I\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e7a7dc60ff8ceb22322a5af165831fe0}{%
+           family={Ballintijn},
+           familyi={B\bibinitperiod},
+           given={Maarten},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e20d7ca9f8ca3440a42bb2636f900616}{%
+           family={Bellenot},
+           familyi={B\bibinitperiod},
+           given={Bertrand},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=cab09827cd6ffe6b2e4bcff135b14e7a}{%
+           family={Biskup},
+           familyi={B\bibinitperiod},
+           given={Marek},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5b146df9e1de521305e912399ecbcb56}{%
+           family={Brun},
+           familyi={B\bibinitperiod},
+           given={Rene},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d9299a62b06aa95c16f1b2809f97ad30}{%
+           family={Buncic},
+           familyi={B\bibinitperiod},
+           given={Nenad},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=347c345d9d134ac1d2f2812ef08af7fd}{%
+           family={Canal},
+           familyi={C\bibinitperiod},
+           given={Ph},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e00c35f61482f10876078a1d139ae15e}{%
+           family={Casadei},
+           familyi={C\bibinitperiod},
+           given={Diego},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=24a3e477ed6816521d8959131497c04b}{%
+           family={Couet},
+           familyi={C\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=dfa64fceee60cab85b888c605d72170a}{%
+           family={Fine},
+           familyi={F\bibinitperiod},
+           given={Valery},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{3d63bc4de19a9599d021cb480a35c61d}
+      \strng{fullhash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{bibnamehash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{authorbibnamehash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{authornamehash}{3d63bc4de19a9599d021cb480a35c61d}
+      \strng{authorfullhash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer Physics Communications}
+      \field{number}{6}
+      \field{title}{ROOT—A C++ framework for petabyte data storage, statistical analysis and visualization}
+      \field{volume}{182}
+      \field{year}{2011}
+      \field{pages}{1384\bibrangedash 1385}
+      \range{pages}{2}
+    \endentry
+    \entry{gonzalez2019adaptive}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=44ff9e41675028247bc786003a27be02}{%
+           family={González-Navarrete},
+           familyi={G\bibinithyphendelim N\bibinitperiod},
+           given={Julio\bibnamedelima César},
+           giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c5378ca9c635f21e89f61cb4deee2839}{%
+           family={Salamanca},
+           familyi={S\bibinitperiod},
+           given={Julián},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{fullhash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{bibnamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authorbibnamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authornamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authorfullhash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Universitas Scientiarum}
+      \field{number}{3}
+      \field{title}{Adaptive model predictions of daily total column ozone over the Amazon Inter-Tropical Confluence Zone}
+      \field{volume}{24}
+      \field{year}{2019}
+      \field{pages}{425\bibrangedash 439}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.11144/Javeriana.SC24-3.ampo
+      \endverb
+    \endentry
+    \entry{gonzalez2018ozone}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=44ff9e41675028247bc786003a27be02}{%
+           family={González-Navarrete},
+           familyi={G\bibinithyphendelim N\bibinitperiod},
+           given={Julio\bibnamedelima César},
+           giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c5378ca9c635f21e89f61cb4deee2839}{%
+           family={Salamanca},
+           familyi={S\bibinitperiod},
+           given={Julián},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0311b8dc220524400a63629833a8fc98}{%
+           family={Pinzón-Verano},
+           familyi={P\bibinithyphendelim V\bibinitperiod},
+           given={Ingrid\bibnamedelima Mónica},
+           giveni={I\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ac66a79f97b4c85af5f26a99ebdfea9b}
+      \strng{fullhash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{bibnamehash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{authorbibnamehash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{authornamehash}{ac66a79f97b4c85af5f26a99ebdfea9b}
+      \strng{authorfullhash}{0131d270409c86a993b8481fa3ab13e4}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Atmósfera}
+      \field{number}{2}
+      \field{title}{Ozone layer adaptive model from direct relationship between solar activity and total column ozone for the tropical equator-Andes-Colombian region}
+      \field{volume}{31}
+      \field{year}{2018}
+      \field{pages}{155\bibrangedash 164}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.20937/ATM.2018.31.02.04
+      \endverb
+    \endentry
+  \enddatalist
+  \datalist[entry]{apa/global//global/global}
+    \entry{antcheva2011root}{article}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{10}{}{%
+        {{un=0,uniquepart=base,hash=8362902a25b786636681bd25f8dae822}{%
+           family={Antcheva},
+           familyi={A\bibinitperiod},
+           given={Ilka},
+           giveni={I\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e7a7dc60ff8ceb22322a5af165831fe0}{%
+           family={Ballintijn},
+           familyi={B\bibinitperiod},
+           given={Maarten},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e20d7ca9f8ca3440a42bb2636f900616}{%
+           family={Bellenot},
+           familyi={B\bibinitperiod},
+           given={Bertrand},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=cab09827cd6ffe6b2e4bcff135b14e7a}{%
+           family={Biskup},
+           familyi={B\bibinitperiod},
+           given={Marek},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5b146df9e1de521305e912399ecbcb56}{%
+           family={Brun},
+           familyi={B\bibinitperiod},
+           given={Rene},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d9299a62b06aa95c16f1b2809f97ad30}{%
+           family={Buncic},
+           familyi={B\bibinitperiod},
+           given={Nenad},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=347c345d9d134ac1d2f2812ef08af7fd}{%
+           family={Canal},
+           familyi={C\bibinitperiod},
+           given={Ph},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=e00c35f61482f10876078a1d139ae15e}{%
+           family={Casadei},
+           familyi={C\bibinitperiod},
+           given={Diego},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=24a3e477ed6816521d8959131497c04b}{%
+           family={Couet},
+           familyi={C\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=dfa64fceee60cab85b888c605d72170a}{%
+           family={Fine},
+           familyi={F\bibinitperiod},
+           given={Valery},
+           giveni={V\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{3d63bc4de19a9599d021cb480a35c61d}
+      \strng{fullhash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{bibnamehash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{authorbibnamehash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \strng{authornamehash}{3d63bc4de19a9599d021cb480a35c61d}
+      \strng{authorfullhash}{d20420b7329ae7b10d1a460fec62dcf4}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer Physics Communications}
+      \field{number}{6}
+      \field{title}{ROOT—A C++ framework for petabyte data storage, statistical analysis and visualization}
+      \field{volume}{182}
+      \field{year}{2011}
+      \field{pages}{1384\bibrangedash 1385}
+      \range{pages}{2}
+    \endentry
+    \entry{gonzalez2019adaptive}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=44ff9e41675028247bc786003a27be02}{%
+           family={González-Navarrete},
+           familyi={G\bibinithyphendelim N\bibinitperiod},
+           given={Julio\bibnamedelima César},
+           giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c5378ca9c635f21e89f61cb4deee2839}{%
+           family={Salamanca},
+           familyi={S\bibinitperiod},
+           given={Julián},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{fullhash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{bibnamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authorbibnamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authornamehash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \strng{authorfullhash}{454576e9ef7c9645dd3f2e3d9cb61271}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Universitas Scientiarum}
+      \field{number}{3}
+      \field{title}{Adaptive model predictions of daily total column ozone over the Amazon Inter-Tropical Confluence Zone}
+      \field{volume}{24}
+      \field{year}{2019}
+      \field{pages}{425\bibrangedash 439}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.11144/Javeriana.SC24-3.ampo
+      \endverb
+    \endentry
+    \entry{gonzalez2018ozone}{article}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=44ff9e41675028247bc786003a27be02}{%
+           family={González-Navarrete},
+           familyi={G\bibinithyphendelim N\bibinitperiod},
+           given={Julio\bibnamedelima César},
+           giveni={J\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c5378ca9c635f21e89f61cb4deee2839}{%
+           family={Salamanca},
+           familyi={S\bibinitperiod},
+           given={Julián},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0311b8dc220524400a63629833a8fc98}{%
+           family={Pinzón-Verano},
+           familyi={P\bibinithyphendelim V\bibinitperiod},
+           given={Ingrid\bibnamedelima Mónica},
+           giveni={I\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{ac66a79f97b4c85af5f26a99ebdfea9b}
+      \strng{fullhash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{bibnamehash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{authorbibnamehash}{0131d270409c86a993b8481fa3ab13e4}
+      \strng{authornamehash}{ac66a79f97b4c85af5f26a99ebdfea9b}
+      \strng{authorfullhash}{0131d270409c86a993b8481fa3ab13e4}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Atmósfera}
+      \field{number}{2}
+      \field{title}{Ozone layer adaptive model from direct relationship between solar activity and total column ozone for the tropical equator-Andes-Colombian region}
+      \field{volume}{31}
+      \field{year}{2018}
+      \field{pages}{155\bibrangedash 164}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.20937/ATM.2018.31.02.04
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
