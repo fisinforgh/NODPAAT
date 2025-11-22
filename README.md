@@ -84,6 +84,19 @@ The system processes NASA ozone data in HDF5 format. Data can be obtained from:
 - [NASA Goddard Space Flight Center](https://ozoneaq.gsfc.nasa.gov/)
 - [NASA EarthData](https://earthdata.nasa.gov/)
 
+### Downloading Data
+
+The `files_download/` folder contains shell scripts as an alternative to NASA's slow sequential wget process. These scripts use `aria2c` to download multiple files simultaneously.
+
+**Install aria2c:**
+```bash
+sudo apt install aria2
+```
+
+**Recommended approach:**
+1. Run each `.sh` script one at a time (e.g., `aria2c_AURA.sh`, `aria2c_NIMBUS.sh`, etc.)
+2. Repeat the process to verify no files are missing
+
 ## Documentation
 
 - Technical Manual: `manual_tecnico/`
